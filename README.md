@@ -1,28 +1,27 @@
-# ANKER – Stabilisationsachse · iki1uc
+# CONTINIUM · Stabilisationsachse · iki1uc
 
-## Zweck
-ANKER ist die Stabilisationsachse des iki1uc‑Systems.
-Es hält die Achsen IQ, QI, EVO, UPD, UPG, BIOS und CALC im korrekten Verhältnis.
+CONTINIUM ist die zentrale Stabilisationsachse des iki1uc‑Systems.
+Sie verbindet alle technischen Achsen und erzeugt einen vollständigen
+WHIRL‑Durchlauf durch alle HTML‑Instanzen.
 
-## Struktur
-- NAME: ANKER
-- ID: A01
-- Station: S01
-- Dimension: D4
-- Modus: erabel (neutral, operation möglich)
+CONTINIUM arbeitet mit vier Kernmodulen:
 
-## Rolle
-ANKER stabilisiert, ohne selbst aktiv zu berechnen oder zu steuern.
-Es ist die neutrale Achse zwischen AXI, 6d und API.
+1. GATE (RAM / CPU / GPU)
+2. WLOCH (TMP / TRANS / WARB)
+3. WHIRL (Core-Lauf)
+4. ROM.boot (Axiom‑12 Endstation)
 
-## Bindungen
-- AXI
-- 6d
-- 360
-- 100
-- 213 (REAL)
-- API
+Alle Module werden durch die Datei `um.js` aktiviert.
 
-## Status
-STATE = STABIL  
-READY = 100%
+---
+
+## 🔹 GATE – Hardware‑Achse
+
+GATE liefert die Grundenergieachsen:
+
+- GATE.RAM
+- GATE.CPU
+- GATE.GPU
+
+HTML‑Injection:
+
