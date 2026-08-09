@@ -2,23 +2,38 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>CONTINIUM · Stabilisationsachse · iki1uc</title>
+<title>CONTINIUM · UM + LAUF · Stabilisationsachse · iki1uc</title>
 
 <style>
-    body {
-        background:#000;
-        color:#0f0;
-        font-family:Consolas, monospace;
-        padding:20px;
-    }
-    h1 { color:#6cf; }
-    pre {
-        background:#111;
-        padding:12px;
-        border:1px solid #333;
-        border-radius:6px;
-        color:#0f0;
-    }
+body {
+    background:#000;
+    color:#0f0;
+    font-family:Consolas, monospace;
+    padding:25px;
+}
+h1 {
+    color:#6cf;
+    text-shadow:0 0 12px #6cf;
+    margin-bottom:30px;
+}
+.block {
+    background:#111;
+    border:1px solid #333;
+    padding:20px;
+    margin-bottom:25px;
+    border-radius:8px;
+}
+.title {
+    font-size:22px;
+    color:#6cf;
+    margin-bottom:10px;
+}
+pre {
+    background:#000;
+    border-left:3px solid #6cf;
+    padding:15px;
+    white-space:pre-wrap;
+}
 </style>
 
 <script type="module">
@@ -30,47 +45,49 @@ import {
     CONTINIUM_TRUTH
 } from "./um.js";
 
-// =========================
-// CSV laden (menschentyp-wahrheit-4.csv)
-// =========================
+import { LAUF } from "./lauf.js";
 
+// CSV laden
 async function loadCSV(){
     const res = await fetch("menschentyp-wahrheit-4.csv");
     const text = await res.text();
     return text.split("\n").map(r => r.split(","));
 }
 
-// =========================
-// CONTINIUM Start
-// =========================
-
+// CONTINIUM Engine
 async function CONTINIUM_START(){
 
-    // Pipeline 3+6 aktivieren
+    // UM‑Ebene
     const pipe = PIPELINE_3_6();
-
-    // Wahrheit laden
     const truth = CONTINIUM_TRUTH();
-
-    // CSV laden
     const csv = await loadCSV();
-
-    // WHIRL erzeugen
     const whirl = WHIRL({ x: 9, y: 6, z: 3 });
 
-    // Ausgabe
+    // LAUF‑Ebene
+    const lauf = LAUF.komplett();
+
+    // Inlekterrederendessendernes Verhalten:
+    // UM + LAUF → Drift + Resonanz + Stabilität
+    const scene = {
+        drift: whirl,
+        resonanz: lauf.resonanz,
+        stabil: lauf.stabil,
+        muster: lauf.vektor,
+        grund: lauf.grund,
+        frame: "CONTINIUM‑SZENE"
+    };
+
     return {
         pipeline: pipe,
-        truth,
+        wahrheit: truth,
         csv,
-        whirl
+        whirl,
+        lauf,
+        scene
     };
 }
 
-// =========================
 // UI
-// =========================
-
 window.onload = async () => {
     const out = await CONTINIUM_START();
     document.getElementById("out").textContent =
@@ -82,9 +99,12 @@ window.onload = async () => {
 
 <body>
 
-<h1>CONTINIUM · Stabilisationsachse · iki1uc</h1>
+<h1>CONTINIUM · UM + LAUF · Stabilisationsachse · iki1uc</h1>
 
-<pre id="out">Lade CONTINIUM…</pre>
+<div class="block">
+    <div class="title">CONTINIUM‑Ausgabe</div>
+    <pre id="out">Lade CONTINIUM…</pre>
+</div>
 
 </body>
 </html>
