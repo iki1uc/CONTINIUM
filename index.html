@@ -2,13 +2,13 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>CONTINIUM · GATE · WLOCH · WHIRL · ROM.boot</title>
+<title>CONTINIUM · Stabilisationsachse · iki1uc</title>
 
 <style>
     body {
         background:#000;
         color:#0f0;
-        font-family:Consolas;
+        font-family:Consolas, monospace;
         padding:20px;
     }
     h1 { color:#6cf; }
@@ -17,6 +17,7 @@
         padding:12px;
         border:1px solid #333;
         border-radius:6px;
+        color:#0f0;
     }
 </style>
 
@@ -25,14 +26,53 @@ import {
     GATE,
     WLOCH,
     WHIRL,
-    TMP,
-    ROM_BOOT,
-    ROM_BUILD,
-    PIPELINE_3_6
+    PIPELINE_3_6,
+    CONTINIUM_TRUTH
 } from "./um.js";
 
-window.onload = () => {
-    const out = PIPELINE_3_6();
+// =========================
+// CSV laden (menschentyp-wahrheit-4.csv)
+// =========================
+
+async function loadCSV(){
+    const res = await fetch("menschentyp-wahrheit-4.csv");
+    const text = await res.text();
+    return text.split("\n").map(r => r.split(","));
+}
+
+// =========================
+// CONTINIUM Start
+// =========================
+
+async function CONTINIUM_START(){
+
+    // Pipeline 3+6 aktivieren
+    const pipe = PIPELINE_3_6();
+
+    // Wahrheit laden
+    const truth = CONTINIUM_TRUTH();
+
+    // CSV laden
+    const csv = await loadCSV();
+
+    // WHIRL erzeugen
+    const whirl = WHIRL({ x: 9, y: 6, z: 3 });
+
+    // Ausgabe
+    return {
+        pipeline: pipe,
+        truth,
+        csv,
+        whirl
+    };
+}
+
+// =========================
+// UI
+// =========================
+
+window.onload = async () => {
+    const out = await CONTINIUM_START();
     document.getElementById("out").textContent =
         JSON.stringify(out, null, 2);
 };
@@ -42,7 +82,7 @@ window.onload = () => {
 
 <body>
 
-<h1>CONTINIUM · Stabilisationsachse</h1>
+<h1>CONTINIUM · Stabilisationsachse · iki1uc</h1>
 
 <pre id="out">Lade CONTINIUM…</pre>
 
