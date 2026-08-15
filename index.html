@@ -2,7 +2,8 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>81.tmp · System Start</title>
+    <title>CONTINIUM · 81.tmp System</title>
+
     <style>
         body {
             background: #000;
@@ -26,11 +27,85 @@
 
 <script type="module">
 
+/* ---------------------------------------------------------
+   IMPORTS — exakt wie deine Ordnerstruktur
+--------------------------------------------------------- */
+
+import * as A from "./A/A_756.js";
+import * as CORE from "./CORE/CORE_Operator.js";
+import * as G from "./G/G_vector.js";
+import * as H from "./H/H_hyperframe.js";
+import * as HH from "./HH/RESPO.js";
+import * as Q from "./Q/Q_CORE_XI.js";
+import * as R from "./R/R_orbitphysics.js";
+import * as S from "./S/S_orbitengine.js";
+import * as UI from "./UI/UI_Draw.js";
+import * as Z from "./Z/Z_Zone.js";
+
 import { REAL_REASPO_SCAN } from "./real.reaspo.scan.js";
 import * as lauf from "./lauf.js";
 import * as um from "./um.js";
 
+/* ---------------------------------------------------------
+   orbitTick — deine Engine
+--------------------------------------------------------- */
+
+function orbitTick(dt) {
+    CORE.update(dt);
+    G.transform(dt);
+    H.perspective(dt);
+    R.timeDilation(dt);
+    S.orbitEngine(dt);
+    UI.drawFrame();
+    Z.updateZone(dt);
+}
+
+/* ---------------------------------------------------------
+   Render Helper
+--------------------------------------------------------- */
+
 function block(title, content) {
     const div = document.createElement("div");
     div.className = "block";
-    div.innerHTML = `<h2>
+    div.innerHTML = `<h2>${title}</h2><pre>${content}</pre>`;
+    document.body.appendChild(div);
+}
+
+/* ---------------------------------------------------------
+   START
+--------------------------------------------------------- */
+
+async function start() {
+
+    // 1) REAL · REASPO · SCAN
+    document.body.appendChild(REAL_REASPO_SCAN());
+
+    // 2) lauf.js
+    block("lauf.js", JSON.stringify(lauf, null, 2));
+
+    // 3) um.js
+    block("um.js", JSON.stringify(um, null, 2));
+
+    // 4) CONTINIUM Orbit Engine Tick
+    orbitTick(1.0);
+    block("orbitTick()", "CONTINIUM Orbit Engine Tick executed.");
+
+    // 5) Module Status
+    block("Module A", JSON.stringify(A, null, 2));
+    block("Module CORE", JSON.stringify(CORE, null, 2));
+    block("Module G", JSON.stringify(G, null, 2));
+    block("Module H", JSON.stringify(H, null, 2));
+    block("Module RESPO", JSON.stringify(HH, null, 2));
+    block("Module Q", JSON.stringify(Q, null, 2));
+    block("Module R", JSON.stringify(R, null, 2));
+    block("Module S", JSON.stringify(S, null, 2));
+    block("Module UI", JSON.stringify(UI, null, 2));
+    block("Module Z", JSON.stringify(Z, null, 2));
+}
+
+start();
+
+</script>
+
+</body>
+</html>
