@@ -28,6 +28,7 @@ canvas {
 </style>
 
 <script type="module">
+import { QUANT } from "./CONST_QUANT.js";     // ← DEIN NEUES CONST-MODUL
 import { CONTINIUM_KEY } from "./CONTINIUM_KEY.js";
 import { LAUF } from "./lauf.js";
 import { orbitTick } from "./orbitTick.js";
@@ -38,42 +39,9 @@ import {
 } from "./um.js";
 
 /* ======================================================
-   QS‑XI‑XTender SPRUNG-ORBIT (SYN + QUANDT)
+   QUANTIFIER START (SYN + QUANDT + SPRUNG-ORBIT)
    ====================================================== */
-
-// Orbit A → 1/3 Sprung (120°)
-let angleA = 0;
-
-// Orbit B → 90° Sprung
-let angleB = 0;
-
-// Orbit C → optional (45°)
-let angleC = 0;
-
-// Sprung jede Sekunde
-setInterval(()=>{
-    angleA += Math.PI * (2/3);   // 120°
-    angleB += Math.PI * (1/2);   // 90°
-    angleC += Math.PI * (1/4);   // 45°
-}, 1000);
-
-// Orbit-Funktionen (NUR DIESE!)
-function QSXI(){
-    return {
-        tokio: {
-            x: Math.cos(angleA) * 2268,
-            y: Math.sin(angleA) * 2268
-        },
-        corlu: {
-            x: Math.cos(angleB) * 756,
-            y: Math.sin(angleB) * 756
-        },
-        hh: {
-            x: Math.cos(angleC) * 243,
-            y: Math.sin(angleC) * 243
-        }
-    };
-}
+QUANT.start();
 
 /* ======================================================
    CANVAS
@@ -96,7 +64,7 @@ document.body.appendChild(out);
    ATOM‑Beweis Animation
    ====================================================== */
 function ATOM_ANIM(t){
-    const seq = CONTINIUM_KEY.sequence();
+    const seq = QUANT.atom.seq;
     return seq[Math.floor((t*10) % seq.length)];
 }
 
@@ -105,7 +73,7 @@ function ATOM_ANIM(t){
    ====================================================== */
 function SINGULAR_VIEW(t){
     const p = CONTINIUM_KEY.pos(t);
-    const s = CONTINIUM_KEY.singularity(p);
+    const s = QUANT.singular(p);
     return { p, s };
 }
 
@@ -118,7 +86,7 @@ function draw(scene){
     const cx = cv.width/2;
     const cy = cv.height/2;
 
-    // QS‑XI‑XTender Dreieck (SYN + QUANDT)
+    // QS‑XI‑XTender Dreieck (SYN + QUANDT + SPRUNG)
     ctx.strokeStyle = "#6cf";
     ctx.beginPath();
     ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tokio.y/30);
@@ -153,7 +121,7 @@ function CONTINIUM_LOOP(){
     const score = CONTINIUM_KEY.stability(pos);
 
     const atom = ATOM_ANIM(t);
-    const qsxi = QSXI();
+    const qsxi = QUANT.qsxi();        // ← JETZT NUTZT index.html DEIN CONST-MODUL
     const singular = SINGULAR_VIEW(t);
 
     const truth = CONTINIUM_TRUTH();
@@ -170,6 +138,7 @@ function CONTINIUM_LOOP(){
         lauf,
         truth,
         whirl,
+        quant: QUANT,
         skills: CONTINIUM_KEY.skills
     };
 
