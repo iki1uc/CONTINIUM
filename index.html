@@ -2,8 +2,8 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>CONTINIUM · Unified TMP-Matrix OS · iki1uc</title>
- 
+<title>CONTINIUM · Unified JS‑OS · iki1uc</title>
+
 <style>
 body {
     margin:0;
@@ -31,14 +31,27 @@ h2 { color:#6cf; }
 <script type="module">
 
 /* ======================================================
-   IMPORTS — deine echten Dateien
+   IMPORTS — ALLE JS‑Dateien aus deinem neuen /JS/ Ordner
 ====================================================== */
-import { QUANT } from "./CONST_QUANT.js";
-import { CONTINIUM_KEY } from "./CONTINIUM_KEY.js";
+
+import { QUANT } from "./JS/CONST_QUANT.js";
+import { CONTINIUM_KEY } from "./JS/CONTINIUM_KEY.js";
+import { MIND_QUANT } from "./JS/MIND_QUANT.js";
+import { NC_PIPELINE } from "./JS/NC_PIPELINE.js";
+import { WHIRL, PIPELINE_3_6, CONTINIUM_TRUTH } from "./JS/UM.js";
+import { LAUF } from "./JS/lauf.js";
+import { RUN8 } from "./JS/real.reaspo.scan.js";
+import { SLIDE } from "./JS/slide.js";
+
+/* ======================================================
+   IMPORTS — TMP‑Matrix (Orbit‑Physik)
+====================================================== */
 import { TMP_MATRIX } from "./tmp/360.js";
-import { orbitTick } from "./orbitTick.js";
-import { WHIRL, PIPELINE_3_6, CONTINIUM_TRUTH } from "./um.js";
-import { LAUF } from "./lauf.js";
+
+/* ======================================================
+   DIGITAL COLD START (RUN8)
+====================================================== */
+RUN8();
 
 /* ======================================================
    QUANT START
@@ -59,7 +72,7 @@ const ctx = cv.getContext("2d");
 ====================================================== */
 const out = document.createElement("pre");
 out.id = "out";
-out.textContent = "Starte CONTINIUM TMP-Matrix…";
+out.textContent = "Starte CONTINIUM Unified JS‑OS…";
 document.body.appendChild(out);
 
 /* ======================================================
@@ -126,33 +139,16 @@ function draw(scene){
     ctx.arc(cx, cy, scene.singular.s.radius/300, 0, Math.PI*2);
     ctx.stroke();
 
-   /* ---------------------------------------------
-   Vektor + Punkt + TMP-Matrix
---------------------------------------------- */
+    /* ---------------------------------------------
+       TMP-Matrix Orbit‑Physik
+    --------------------------------------------- */
+    ctx.fillStyle = "#6cf";
+    ctx.font = "18px Consolas";
 
-const scene = {
-    // Vektor-Ebene (Raum)
-    orbit: CONTINIUM_KEY.pos(t),
-    slide: CONTINIUM_KEY.slideFrame(pos),
-    singular: SINGULAR_VIEW(t),
-
-    // Punkt-Ebene (Skalar)
-    tmp: TMP_PHYSIK(t),
-
-    // Axiomatischer Punkt (Ursprung)
-    origin: { x: 0, y: 0, z: 0 },
-
-    // QUANT / QS-XI
-    atom: ATOM_ANIM(t),
-    qsxi: QUANT.qsxi(),
-
-    // Physik / Geo / Mathe
-    whirl: WHIRL({ x: 9, y: 6, z: 3 }),
-    truth: CONTINIUM_TRUTH(),
-    lauf: LAUF.komplett(),
-    skills: CONTINIUM_KEY.skills
-};
-
+    let y = cy + 120;
+    for(const key in scene.tmp){
+        ctx.fillText(`${key}: ${scene.tmp[key].toFixed(2)}`, cx - 180, y);
+        y += 22;
     }
 }
 
@@ -176,41 +172,3 @@ function CONTINIUM_LOOP(){
     const tmp = TMP_PHYSIK(t);
     const truth = CONTINIUM_TRUTH();
     const whirl = WHIRL({ x: 9, y: 6, z: 3 });
-    const lauf = LAUF.komplett();
-
-    const scene = {
-        orbit: pos,
-        slide,
-        score,
-        atom,
-        qsxi,
-        singular,
-        tmp,
-        lauf,
-        truth,
-        whirl,
-        quant: QUANT,
-        skills: CONTINIUM_KEY.skills
-    };
-
-    draw(scene);
-
-    out.textContent = JSON.stringify(scene, null, 2);
-
-    orbitTick(0.016);
-
-    requestAnimationFrame(CONTINIUM_LOOP);
-}
-
-/* ======================================================
-   START
-====================================================== */
-window.onload = () => {
-    pipe = PIPELINE_3_6();
-    CONTINIUM_LOOP();
-};
-</script>
-
-</head>
-<body></body>
-</html>
