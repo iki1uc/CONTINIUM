@@ -1,0 +1,5 @@
+export const Q_TMP = {
+    sign: "Q◉",
+    axis: 9,
+    calc(t){ return Math.sin(t*0.66) * this.axis; }
+};
