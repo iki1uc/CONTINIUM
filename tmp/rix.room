@@ -1,12 +1,11 @@
-export const TMP_MATRIX = {
-    A: A_TMP,
-    CORE: CORE_TMP,
-    G: G_TMP,
-    H: H_TMP,
-    HH: HH_TMP,
-    Q: Q_TMP,
-    R: R_TMP,
-    S: S_TMP,
-    UI: UI_TMP,
-    Z: Z_TMP
-};
+A_TMP.orb
+CORE_TMP.core
+G_TMP.vec   // optional statt run
+H_TMP.hyper
+HH_TMP.res
+Q_TMP.quant
+R_TMP.geo
+S_TMP.engine
+UI_TMP.frame
+Z_TMP.zone
+rix.room
