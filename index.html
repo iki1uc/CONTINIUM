@@ -1,111 +1,158 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>CONTINIUM · ALL‑X‑ALL Unified OS · iki1uc</title>
-
 <style>
-body {
-    margin:0;
-    background:#000;
-    color:#0f0;
-    font-family:Consolas, monospace;
-}
+body { margin:0; background:#000; color:#0f0; font-family:Consolas, monospace; }
 #out {
-    position:absolute;
-    top:20px;
-    left:20px;
-    width:420px;
-    height:540px;
-    overflow:auto;
-    background:#111;
-    border-left:3px solid #6cf;
-    padding:15px;
+    position:absolute; top:20px; left:20px;
+    width:420px; height:540px; overflow:auto;
+    background:#111; border-left:3px solid #6cf; padding:15px;
+    white-space:pre-wrap; font-family:monospace;
 }
-canvas { display:block; }
+canvas { display:block; width:100vw; height:100vh; }
 h1 { color:#6cf; text-align:center; margin-top:20px; }
 </style>
 </head>
-
 <body>
-
 <h1>CONTINIUM · ALL‑X‑ALL Unified OS</h1>
 <pre id="out">Starte CONTINIUM…</pre>
 <canvas id="cv"></canvas>
 
 <script type="module">
+(async function start() {
+    const out = document.getElementById('out');
+    function log(...args){ console.log(...args); out.textContent += '\\n' + args.map(a => typeof a === 'string' ? a : JSON.stringify(a,null,2)).join(' '); }
+    function error(...args){ console.error(...args); out.textContent += '\\nERROR: ' + args.map(a => a && a.stack ? a.stack : String(a)).join(' '); }
 
-/* ======================================================
-   IMPORTS — ALLE MODULE
-====================================================== */
-import { QUANT } from "./JS/CONST_QUANT.js";
-import { CONTINIUM_KEY } from "./JS/CONTINIUM_KEY.js";
-import { MIND_QUANT } from "./JS/MIND_QUANT.js";
-import { NC_PIPELINE } from "./JS/NC_PIPELINE.js";
-import { UHRWERK } from "./JS/uhrwerk.js";
-import { MATRIX_360 } from "./JS/MATRIX_360.js";
-import { SLIDE } from "./JS/slide.js";
-import { RUN8 } from "./JS/real.reaspo.scan.js";
-import { orbitTick } from "./JS/lauf.js";
-import { WHIRL, PIPELINE_3_6, CONTINIUM_TRUTH } from "./JS/UM.js";
-import { PIPEBUILD } from "./JS/Pipebuild.js";
+    // dynamische Ladereihenfolge — so bricht nicht die ganze Seite bei einem fehlenden Modul
+    const imports = {
+        QUANT: './JS/CONST_QUANT.js',
+        CONTINIUM_KEY: './JS/CONTINIUM_KEY.js',
+        MIND_QUANT: './JS/MIND_QUANT.js',
+        NC_PIPELINE: './JS/NC_PIPELINE.js',
+        UHRWERK: './JS/uhrwerk.js',
+        MATRIX_360: './JS/MATRIX_360.js',
+        SLIDE: './JS/slide.js',
+        RUN8: './JS/real.reaspo.scan.js',
+        orbitTickMod: './JS/lauf.js',
+        UM: './JS/UM.js',
+        PIPEBUILD: './JS/Pipebuild.js'
+    };
 
-/* ======================================================
-   PIPEBUILD ENGINE — Startsequenz
-====================================================== */
-const BOOT = PIPEBUILD();
+    const loaded = {};
+    try {
+        // Promise.allSettled, damit wir Fehler pro Modul sehen
+        const promises = Object.entries(imports).map(([key, path]) =>
+            import(path).then(m => ({ key, m })).catch(err => ({ key, err, path }))
+        );
+        const results = await Promise.all(promises);
+        for (const r of results) {
+            if (r.err) {
+                error(`Fehler beim Laden ${r.key} from ${r.path}:`, r.err);
+            } else {
+                loaded[r.key] = r.m;
+                log(`geladen: ${r.key}`);
+            }
+        }
+    } catch (e) {
+        error('Unerwarteter Import-Fehler:', e);
+    }
 
-/* ======================================================
-   CANVAS
-====================================================== */
-const cv = document.getElementById("cv");
-cv.width = window.innerWidth;
-cv.height = window.innerHeight;
-const ctx = cv.getContext("2d");
+    // Guard: überprüfe wichtige Exporte
+    const QUANT = loaded.QUANT?.QUANT ?? loaded.QUANT?.default;
+    const CONTINIUM_KEY = loaded.CONTINIUM_KEY?.CONTINIUM_KEY ?? loaded.CONTINIUM_KEY?.default;
+    const orbitTick = loaded.orbitTickMod?.orbitTick ?? loaded.orbitTickMod?.default;
+    const { WHIRL, PIPELINE_3_6, CONTINIUM_TRUTH } = loaded.UM ?? {};
 
-/* ======================================================
-   ARG / XARG / ARG3te
-====================================================== */
-function ARG(t){ return CONTINIUM_KEY.pos(t); }
-function XARG(a){ return SLIDE(a).slide; }
-function ARG3TE(t){
-    let e = 0;
-    for(const k in MATRIX_360) e += Math.abs(MATRIX_360[k].calc(t));
-    return e / 3600;
-}
+    if (!QUANT || !CONTINIUM_KEY) {
+        error('Wichtige Module fehlen: QUANT oder CONTINIUM_KEY. Prüfe die Dateinamen/Exports im ./JS Ordner.');
+        return;
+    }
 
-/* ======================================================
-   DRAW — Dreieck + Atom + Singularität
-====================================================== */
-function draw(scene){
-    ctx.clearRect(0,0,cv.width,cv.height);
+    // canvas initialisieren mit devicePixelRatio-scaling
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    function resizeCanvas(){
+        const dpr = window.devicePixelRatio || 1;
+        cv.width = Math.floor(window.innerWidth * dpr);
+        cv.height = Math.floor(window.innerHeight * dpr);
+        cv.style.width = window.innerWidth + 'px';
+        cv.style.height = window.innerHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    const cx = cv.width/2;
-    const cy = cv.height/2;
+    // Hilfs-Funktionen (falls Module fehlen, Ersatzfunktionen)
+    function ATOM_ANIM(t){
+        try { const seq = QUANT.atom.seq; return seq[Math.floor((t*10) % seq.length)]; }
+        catch(e){ return '?'; }
+    }
+    function SINGULAR_VIEW(t){
+        try { const p = CONTINIUM_KEY.pos(t); const s = QUANT.singular(p); return { p, s }; }
+        catch(e){ return { p:null, s:{ radius:0 } }; }
+    }
 
-    /* --- QSXI Dreieck --- */
-    ctx.strokeStyle = "#6cf";
-    ctx.beginPath();
-    ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tokio.y/30);
-    ctx.lineTo(cx + scene.qsxi.corlu.x/30, cy + scene.qsxi.corlu.y/30);
-    ctx.lineTo(cx + scene.qsxi.hh.x/30,    cy + scene.qsxi.hh.y/30);
-    ctx.closePath();
-    ctx.stroke();
+    function draw(scene){
+        ctx.clearRect(0,0,cv.width,cv.height);
+        const cx = window.innerWidth/2;
+        const cy = window.innerHeight/2;
 
-    /* --- Atom --- */
-    ctx.fillStyle = "#0f0";
-    ctx.font = "32px Consolas";
-    ctx.fillText(scene.atom, cx - 16, cy - 16);
+        // Dreieck nur wenn qsxi existiert
+        if (scene.qsxi && scene.qsxi.tokio && scene.qsxi.corlu && scene.qsxi.hh) {
+            ctx.strokeStyle = "#6cf";
+            ctx.beginPath();
+            ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tokio.y/30);
+            ctx.lineTo(cx + scene.qsxi.corlu.x/30, cy + scene.qsxi.corlu.y/30);
+            ctx.lineTo(cx + scene.qsxi.hh.x/30,    cy + scene.qsxi.hh.y/30);
+            ctx.closePath(); ctx.stroke();
+        }
 
-    /* --- Singularität --- */
-    ctx.strokeStyle = "#f00";
-    ctx.beginPath();
-    ctx.arc(cx, cy, scene.singular.s.radius/300, 0, Math.PI*2);
-    ctx.stroke();
-}
+        ctx.fillStyle = "#0f0"; ctx.font = "32px Consolas";
+        ctx.fillText(scene.atom ?? '?', cx - 16, cy - 16);
 
-/* ======================================================
-   LOOP — ALL‑X‑ALL Fusion
-====================================================== */
-function CONTINIUM_LOOP(){
+        ctx.strokeStyle = "#f00";
+        ctx.beginPath();
+        ctx.arc(cx, cy, (scene.singular?.s?.radius ?? 0) / 300, 0, Math.PI*2);
+        ctx.stroke();
+    }
 
+    // Start QUANT etc.
+    try { if (typeof QUANT.start === 'function') QUANT.start(); } catch(e){ log('QUANT.start() fehlgeschlagen:', e); }
+
+    let lastTime = performance.now();
+    function CONTINIUM_LOOP(){
+        const t = performance.now() * 0.0004;
+        try {
+            const pos = CONTINIUM_KEY.pos?.(t) ?? null;
+            const slide = CONTINIUM_KEY.slideFrame?.(pos) ?? null;
+            const score = CONTINIUM_KEY.stability?.(pos) ?? null;
+            const atom = ATOM_ANIM(t);
+            const qsxi = QUANT.qsxi?.() ?? {};
+            const singular = SINGULAR_VIEW(t);
+            const truth = (typeof CONTINIUM_TRUTH === 'function') ? CONTINIUM_TRUTH() : null;
+            const whirl = (typeof WHIRL === 'function') ? WHIRL({ x:9,y:6,z:3 }) : null;
+            const lauf = (loaded.orbitTickMod?.LAUF?.komplett) ? loaded.orbitTickMod.LAUF.komplett() : null;
+
+            const scene = { orbit: pos, slide, score, atom, qsxi, singular, lauf, truth, whirl, quant: QUANT, skills: CONTINIUM_KEY.skills };
+            draw(scene);
+            out.textContent = JSON.stringify(scene, null, 2);
+
+            if (typeof orbitTick === 'function') orbitTick(0.016);
+        } catch (e) {
+            error('Fehler im Loop:', e);
+        }
+        requestAnimationFrame(CONTINIUM_LOOP);
+    }
+
+    // PIPEBUILD/BOOT falls vorhanden
+    try { if (typeof loaded.PIPEBUILD?.default === 'function') loaded.PIPEBUILD.default(); else if (typeof loaded.PIPEBUILD?.PIPEBUILD === 'function') loaded.PIPEBUILD.PIPEBUILD(); } catch(e){ log('PIPEBUILD Fehler:', e); }
+
+    // starte Loop
+    CONTINIUM_LOOP();
+})();
+</script>
+</body>
+</html>
