@@ -2,13 +2,13 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>CONTINIUM · Arena · SYN·QUANT·CONST</title>
+<title>CONTINIUM · Universal‑Übersetzer · Arena</title>
 
 <style>
 body { margin:0; background:#000; color:#0f0; font-family:Consolas; }
 #score {
     position:absolute; top:20px; left:20px;
-    width:300px; height:260px;
+    width:320px; height:300px;
     background:#111; border-left:3px solid #6cf;
     padding:15px; overflow:auto;
 }
@@ -43,49 +43,18 @@ const beings = [
     { name:"pacman‑strich‑wech", color:"#f0f", score:0 }
 ];
 
-function TMP_ENERGY(t){
+function arg(t,i){
+    return CONTINIUM_KEY.pos(t+i);
+}
+
+function xarg(a){
+    return SLIDE(a).vec;
+}
+
+function arg3te(t){
     let e = 0;
     for(const k in TMP_MATRIX) e += Math.abs(TMP_MATRIX[k].calc(t));
     return e / 1200;
 }
 
-function LOOP(){
-    const t = performance.now() * 0.0004;
-    ctx.clearRect(0,0,cv.width,cv.height);
-
-    const atom = QUANT.atom.seq[Math.floor((t*10) % QUANT.atom.seq.length)];
-    const qsxi = QUANT.qsxi();
-
-    beings.forEach((b,i)=>{
-        const pos = CONTINIUM_KEY.pos(t + i);
-        const slide = SLIDE(pos).vec;
-        const energy = TMP_ENERGY(t + i);
-
-        const x = cv.width/2  + slide.x*2 + (i*80 - 80);
-        const y = cv.height/2 + slide.y*2;
-
-        b.score += Math.abs(slide.x)*0.1 + Math.abs(slide.y)*0.1 + energy*0.3;
-
-        ctx.fillStyle = b.color;
-        ctx.beginPath();
-        ctx.arc(x, y, 20 + energy*10, 0, Math.PI*2);
-        ctx.fill();
-
-        ctx.fillStyle = "#fff";
-        ctx.fillText(b.name, x - 20, y - 30);
-    });
-
-    document.getElementById("score").textContent =
-        beings.sort((a,b)=>b.score - a.score)
-              .map(b=>`${b.name}: ${b.score.toFixed(2)}`)
-              .join("\n");
-
-    orbitTick(0.016);
-    requestAnimationFrame(LOOP);
-}
-
-LOOP();
-
-</script>
-</body>
-</html>
+function
