@@ -126,16 +126,33 @@ function draw(scene){
     ctx.arc(cx, cy, scene.singular.s.radius/300, 0, Math.PI*2);
     ctx.stroke();
 
-    /* ---------------------------------------------
-       TMP-Matrix Orbit‑Physik
-    --------------------------------------------- */
-    ctx.fillStyle = "#6cf";
-    ctx.font = "18px Consolas";
+   /* ---------------------------------------------
+   Vektor + Punkt + TMP-Matrix
+--------------------------------------------- */
 
-    let y = cy + 120;
-    for(const key in scene.tmp){
-        ctx.fillText(`${key}: ${scene.tmp[key].toFixed(2)}`, cx - 180, y);
-        y += 22;
+const scene = {
+    // Vektor-Ebene (Raum)
+    orbit: CONTINIUM_KEY.pos(t),
+    slide: CONTINIUM_KEY.slideFrame(pos),
+    singular: SINGULAR_VIEW(t),
+
+    // Punkt-Ebene (Skalar)
+    tmp: TMP_PHYSIK(t),
+
+    // Axiomatischer Punkt (Ursprung)
+    origin: { x: 0, y: 0, z: 0 },
+
+    // QUANT / QS-XI
+    atom: ATOM_ANIM(t),
+    qsxi: QUANT.qsxi(),
+
+    // Physik / Geo / Mathe
+    whirl: WHIRL({ x: 9, y: 6, z: 3 }),
+    truth: CONTINIUM_TRUTH(),
+    lauf: LAUF.komplett(),
+    skills: CONTINIUM_KEY.skills
+};
+
     }
 }
 
