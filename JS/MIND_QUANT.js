@@ -1,46 +1,34 @@
-// ======================================================
-// MIND_QUANT.js · CONTINIUM Quantum Layer
-// ======================================================
+// ==========================================
+// MIND_QUANT.js · QUANT-Kernmodul
+// ==========================================
 
-// Atom‑Sequenz (Beweis)
-const ATOM_SEQ = [
-    "⚛︎", "✧", "✦", "✩", "✪", "✫", "✬", "✭", "✮", "✯"
-];
+export const MIND_QUANT = {
 
-// QS‑XI Frame (Tokio / Corlu / HH)
-function QSXI() {
-    return {
-        tokio: { x: Math.random()*100 - 50, y: Math.random()*100 - 50 },
-        corlu: { x: Math.random()*100 - 50, y: Math.random()*100 - 50 },
-        hh:    { x: Math.random()*100 - 50, y: Math.random()*100 - 50 }
-    };
-}
-
-// Singularität
-function singular(pos) {
-    return {
-        radius: Math.abs(pos.x) + Math.abs(pos.y) + Math.abs(pos.z),
-        core: "SINGULARITY"
-    };
-}
-
-// QUANT Objekt
-export const QUANT = {
-
-    // Start
-    start(){
-        console.log("QUANT Layer gestartet.");
-    },
-
-    // Atom‑Beweis
+    // QUANT Atom-Sequenz
     atom: {
-        seq: ATOM_SEQ
+        seq: ["⚛", "✦", "✧", "✩", "✪", "✫", "✬", "✭", "✮"]
     },
 
-    // QS‑XI
-    qsxi: QSXI,
+    // QS‑XI Dreieck
+    qsxi(){
+        return {
+            tokio: { x: Math.random()*100, y: Math.random()*100 },
+            corlu: { x: Math.random()*100, y: Math.random()*100 },
+            hh:    { x: Math.random()*100, y: Math.random()*100 }
+        };
+    },
 
-    // Singularität
-    singular: singular
+    // Singularitätsberechnung
+    singular(pos){
+        return {
+            s: {
+                radius: Math.sqrt(pos.x*pos.x + pos.y*pos.y + pos.z*pos.z)
+            }
+        };
+    },
+
+    // Startsignal
+    start(){
+        console.log("MIND_QUANT · QUANT Engine gestartet");
+    }
 };
-
