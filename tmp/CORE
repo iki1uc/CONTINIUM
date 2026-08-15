@@ -1,0 +1,5 @@
+export const CORE_TMP = {
+    sign: "CORE◆",
+    axis: 81,
+    calc(t){ return Math.cos(t) * this.axis; }
+};
