@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>CONTINIUM · 404 · Orbit Lost</title>
+
+<style>
+body {
+    margin:0;
+    background:#000;
+    color:#f00;
+    font-family:Consolas, monospace;
+    text-align:center;
+    padding-top:120px;
+}
+h1 { font-size:48px; color:#f00; }
+p { font-size:22px; color:#6cf; }
+a { color:#0f0; font-size:20px; }
+</style>
+
+<script type="module">
+import { QUANT } from "./JS/CONST_QUANT.js";
+import { CONTINIUM_KEY } from "./JS/CONTINIUM_KEY.js";
+
+QUANT.start();
+
+const atom = QUANT.atom.seq[0];
+const qsxi = QUANT.qsxi();
+const pos = CONTINIUM_KEY.pos(0);
+</script>
+
+</head>
+
+<body>
+<h1>404 · Orbit Lost</h1>
+
+<p>Die Datei befindet sich nicht im CONTINIUM‑Orbit.</p>
+<p>QS‑XI konnte den Pfad nicht triangulieren.</p>
+<p>Atom‑Sequenz: <span style="color:#0f0; font-size:28px;">◉</span></p>
+
+<p>Orbit‑Position: <span style="color:#6cf;">x:0 y:0 z:0</span></p>
+
+<a href="index.html">Zurück zum Haupt‑OS</a>
+</body>
+</html>
