@@ -41,5 +41,375 @@
         <button id="btnStop">Stop Loop</button>
         <button id="btnRecompute">Recompute Fix‑Point</button>
         <button id="btnRandom">Randomize Matrix</button>
-        <button id
-
+        <button id="btnNormalize">Normalize Rows</button>
+        <button id="btnExport">Export JSON</button>
+      </section>
+
+      <section class="matrix">
+        <div style="font-weight:700;margin-bottom:6px">6×6 Einflussmatrix (Zeile = Ziel, Spalte = Quelle)</div>
+        <div id="matrixContainer"></div>
+      </section>
+
+      <section style="margin-top:8px">
+        <div>Fix‑Point:</div>
+        <pre id="fixPoint" class="point">—</pre>
+        <div class="footer">© iki1uc wieimmer · CONTINIUM · Unified OS7</div>
+      </section>
+
+      <section style="margin-top:8px">
+        <div id="logTitle">Log</div>
+        <div id="out">Init…</div>
+      </section>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;">
+      <canvas id="viz"></canvas>
+      <div style="margin-top:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="note">Visualisierung: Knoten = Ebenen, Kanten = gewichtete Einflüsse</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+/* 6x6 Kosmos index.html
+   - Layers: SYN, QUANT, CONST, TMP, QSXI, ORBIT
+   - 6x6 weight matrix W[target][source]
+   - compute per-layer scores, apply matrix to compute influenced scores
+   - combine to one axiomatischen Fix‑Punkt (x,y,z + meta)
+   - interactive sliders to tune weights
+*/
+
+const layerOrder = ['SYN','QUANT','CONST','TMP','QSXI','ORBIT'];
+const N = layerOrder.length;
+
+// defaults & placeholders (falls Module fehlen)
+const defaults = {
+  SYN: { orientation: 0 },
+  QUANT: { energy: 1 },
+  CONST: { stability: 1 },
+  TMP: { velocity: 0 },
+  QSXI: { points: [{x:0,y:0}] },
+  ORBIT: { mass: 1 }
+};
+
+const MODULE_MAP = { // falls du module hast, setze Pfade hier
+  SYN: './JS/SYN.js',
+  QUANT: './JS/CONST_QUANT.js',
+  CONST: './JS/CONST.js',
+  TMP: './JS/TMP.js',
+  QSXI: './JS/QSXI.js',
+  ORBIT: './JS/ORBIT.js'
+};
+
+const loaded = {};
+const status = {};
+const W = []; // matrix W[target][source]
+
+// UI refs
+const layersList = document.getElementById('layersList');
+const outEl = document.getElementById('out');
+const fixPointEl = document.getElementById('fixPoint');
+const matrixContainer = document.getElementById('matrixContainer');
+const viz = document.getElementById('viz');
+const ctx = viz.getContext('2d');
+
+function log(...args){ console.log(...args); outEl.textContent += '\\n' + args.join(' '); outEl.scrollTop = outEl.scrollHeight; }
+function warn(...a){ console.warn(...a); outEl.textContent += '\\nWARN: ' + a.join(' '); }
+function setLayerStatus(name, ok, msg=''){ status[name] = { loaded: !!ok, msg: msg || (ok ? 'loaded' : 'missing') }; renderLayerList(); }
+
+function renderLayerList(){
+  layersList.innerHTML = '';
+  for(const name of layerOrder){
+    const s = status[name] || {loaded:false,msg:'unknown'};
+    const div = document.createElement('div');
+    div.className = 'layer';
+    div.innerHTML = `<div><strong>${name}</strong><div style="font-size:12px;color:#8f8">${s.msg}</div></div>
+                     <div class="status">${s.loaded ? 'OK' : 'FALLBACK'}</div>`;
+    layersList.appendChild(div);
+  }
+}
+
+// init matrix with identity-ish small weights
+function initMatrix(){
+  for(let i=0;i<N;i++){
+    W[i] = [];
+    for(let j=0;j<N;j++){
+      W[i][j] = (i===j) ? 0.8 : 0.1; // self-weight stronger by default
+    }
+  }
+}
+
+// render matrix UI (sliders)
+function renderMatrixUI(){
+  const table = document.createElement('table');
+  table.className = 'matrix-table';
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  headRow.innerHTML = '<th></th>' + layerOrder.map(n => `<th>${n}</th>`).join('');
+  thead.appendChild(headRow); table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  for(let i=0;i<N;i++){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<th>${layerOrder[i]}</th>`;
+    for(let j=0;j<N;j++){
+      const td = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = 'range'; input.min = -1; input.max = 2; input.step = 0.05;
+      input.value = W[i][j];
+      input.dataset.i = i; input.dataset.j = j;
+      const span = document.createElement('div'); span.style.fontSize='11px'; span.style.marginTop='4px';
+      span.textContent = W[i][j];
+      input.addEventListener('input', (e)=>{
+        const ii = +e.target.dataset.i, jj = +e.target.dataset.j;
+        W[ii][jj] = +e.target.value;
+        span.textContent = Number(W[ii][jj].toFixed(2));
+        scheduleRecompute();
+      });
+      td.appendChild(input); td.appendChild(span);
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  matrixContainer.innerHTML = '';
+  matrixContainer.appendChild(table);
+}
+
+// try dynamic module loading (tolerant)
+async function tryLoadModules(){
+  const entries = Object.entries(MODULE_MAP);
+  for(const [key,path] of entries){
+    try{
+      const mod = await import(path);
+      loaded[key] = mod;
+      setLayerStatus(key, true, 'loaded');
+      log(`geladen: ${key}`);
+    }catch(e){
+      loaded[key] = null;
+      setLayerStatus(key, false, `missing: ${path}`);
+      warn(`Modul ${key} nicht geladen: ${path}`);
+    }
+  }
+}
+
+// extract per-layer scalar score (0..1 roughly)
+function layerScore(name){
+  const mod = loaded[name];
+  try{
+    if(!mod) {
+      // compute from defaults simple scalar
+      if(name==='QSXI') return 0.1;
+      if(name==='QUANT') return 0.6;
+      if(name==='CONST') return 0.7;
+      return 0.2;
+    }
+    // best-effort checks
+    if(name==='QUANT'){
+      const v = mod.QUANT?.energy ?? mod.default?.energy ?? mod.energy ?? 1;
+      return normalizeScalar(Number(v), 0, 10);
+    }
+    if(name==='CONST'){
+      const v = mod.CONST?.stability ?? mod.default?.stability ?? mod.stability ?? 1;
+      return normalizeScalar(Number(v), 0, 10);
+    }
+    if(name==='TMP'){
+      const v = mod.TMP?.velocity ?? mod.velocity ?? 0;
+      return normalizeScalar(Math.abs(Number(v)), 0, 50);
+    }
+    if(name==='SYN'){
+      const v = mod.SYN?.orientation ?? mod.orientation ?? 0;
+      return normalizeScalar(Math.abs(Number(v)), 0, Math.PI*2);
+    }
+    if(name==='QSXI'){
+      const pts = mod.QSXI?.points ?? mod.points ?? [{x:0,y:0}];
+      const r = Math.hypot(pts[0].x || 0, pts[0].y || 0);
+      return normalizeScalar(r, 0, 200);
+    }
+    if(name==='ORBIT'){
+      const v = mod.ORBIT?.mass ?? mod.mass ?? 1;
+      return normalizeScalar(Number(v), 0, 100);
+    }
+    return 0.2;
+  }catch(e){
+    warn('layerScore read error', name, e);
+    return 0.1;
+  }
+}
+
+function normalizeScalar(v,min,max){
+  if(!isFinite(v)) return 0;
+  const t = (v - min) / (max - min);
+  return Math.max(0, Math.min(1, t));
+}
+
+// compute influenced scores: influenced[i] = sum_j W[i][j] * score[j]
+function computeInfluencedScores(){
+  const scores = layerOrder.map(n => layerScore(n));
+  const influenced = new Array(N).fill(0);
+  for(let i=0;i<N;i++){
+    let s=0;
+    for(let j=0;j<N;j++){
+      s += (W[i][j]||0) * scores[j];
+    }
+    influenced[i] = s;
+  }
+  return { scores, influenced };
+}
+
+// Combine influenced scores to one Fix‑Point
+function computeFixPoint(){
+  const { scores, influenced } = computeInfluencedScores();
+  // QSXI centroid if available
+  let centroid = {x:0,y:0};
+  try{
+    const mod = loaded.QSXI;
+    const pts = mod?.QSXI?.points ?? mod?.points ?? defaults.QSXI.points;
+    centroid = pts.length ? pts.reduce((a,p)=>({x:a.x+p.x,y:a.y+p.y}),{x:0,y:0}) : {x:0,y:0};
+    centroid.x /= Math.max(1, (pts?.length||1)); centroid.y /= Math.max(1,(pts?.length||1));
+  }catch(e){ centroid={x:0,y:0}; }
+
+  // Create x,y using centroid shifted by weighted orientation & tmp velocities
+  const syn = influenced[0] ?? 0;
+  const tmp = influenced[3] ?? 0;
+  const angle = (syn % 1) * Math.PI*2;
+  const vx = Math.cos(angle) * tmp * 30;
+  const vy = Math.sin(angle) * tmp * 30;
+  const x = centroid.x + vx;
+  const y = centroid.y + vy;
+
+  // z from weighted energy/mass/stability
+  const quant = influenced[1] ?? 1;
+  const orbit = influenced[5] ?? 1;
+  const cons = influenced[2] ?? 1;
+  const z = (quant * orbit) / Math.max(0.0001, Math.abs(cons) || 1);
+
+  const point = { x: Number(x.toFixed(4)), y: Number(y.toFixed(4)), z: Number(z.toFixed(4)) };
+  const meta = { baseScores: scores, influenced, centroid, timestamp: Date.now() };
+  return { point, meta };
+}
+
+/* --- Visualization --- */
+function resizeCanvas(){
+  const dpr = window.devicePixelRatio || 1;
+  viz.width = Math.floor(viz.clientWidth * dpr);
+  viz.height = Math.floor(viz.clientHeight * dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function drawGraph(fix){
+  resizeCanvas();
+  ctx.clearRect(0,0,viz.clientWidth,viz.clientHeight);
+  const cx = viz.clientWidth/2, cy = viz.clientHeight/2;
+  // circle layout
+  const R = Math.min(cx,cy) - 80;
+  const angleStep = (Math.PI*2)/N;
+  const pts = [];
+  for(let i=0;i<N;i++){
+    const a = -Math.PI/2 + i*angleStep;
+    pts.push({ x: cx + Math.cos(a)*R, y: cy + Math.sin(a)*R, name:layerOrder[i] });
+  }
+
+  // draw edges weighted (use influenced as target weights)
+  const influenced = fix.meta.influenced;
+  for(let i=0;i<N;i++){
+    for(let j=0;j<N;j++){
+      const w = W[i][j] || 0;
+      if(Math.abs(w) < 0.02) continue;
+      ctx.beginPath();
+      ctx.strokeStyle = w>0 ? `rgba(108,204,255,${Math.min(1,Math.abs(w))})` : `rgba(255,100,100,${Math.min(1,Math.abs(w))})`;
+      ctx.lineWidth = Math.max(1, Math.abs(w)*6);
+      ctx.moveTo(pts[i].x, pts[i].y);
+      // curve toward source
+      const mx = (pts[i].x + pts[j].x)/2 + (pts[i].y - pts[j].y)*0.08;
+      const my = (pts[i].y + pts[j].y)/2 + (pts[j].x - pts[i].x)*0.08;
+      ctx.quadraticCurveTo(mx,my, pts[j].x, pts[j].y);
+      ctx.stroke();
+    }
+  }
+
+  // draw nodes
+  for(let i=0;i<N;i++){
+    const p = pts[i];
+    const infl = Math.max(0, Math.min(1, (fix.meta.influenced[i] || 0)));
+    const radius = 12 + infl*18;
+    ctx.fillStyle = '#111';
+    ctx.strokeStyle = '#6cf';
+    ctx.beginPath(); ctx.arc(p.x,p.y,radius,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#0f0'; ctx.font = '12px Consolas'; ctx.fillText(layerOrder[i], p.x - radius + 4, p.y + 4);
+  }
+
+  // draw fix point indicator (centered representing x/y)
+  const fx = cx + fix.point.x / 30;
+  const fy = cy + fix.point.y / 30;
+  ctx.fillStyle = '#ffd54d';
+  ctx.beginPath(); ctx.arc(fx, fy, Math.max(6, Math.min(30, Math.abs(fix.point.z)/50)), 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#9f9'; ctx.font='12px Consolas';
+  ctx.fillText(`fix: x:${fix.point.x} y:${fix.point.y} z:${fix.point.z}`, 10, 18);
+}
+
+/* --- Actions & UI --- */
+let loop=null;
+function startLoop(){
+  if(loop) return;
+  log('Loop gestartet');
+  loop = setInterval(()=>{ recomputeAndDraw(); }, 600);
+}
+function stopLoop(){
+  if(!loop) return;
+  clearInterval(loop); loop=null; log('Loop gestoppt');
+}
+function recomputeAndDraw(){
+  const fix = computeFixPoint();
+  fixPointEl.textContent = JSON.stringify(fix.point, null, 2);
+  drawGraph(fix);
+  log('recomputed @ ' + new Date().toISOString());
+}
+function randomizeMatrix(){
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++) W[i][j] = Number((Math.random()*2 - 0.2).toFixed(2)); // -0.2..1.8
+  renderMatrixUI();
+  recomputeAndDraw();
+}
+function normalizeRows(){
+  for(let i=0;i<N;i++){
+    const row = W[i];
+    const s = row.reduce((a,b)=>a+Math.abs(b),0) || 1;
+    for(let j=0;j<N;j++) row[j] = Number((row[j]/s).toFixed(4));
+  }
+  renderMatrixUI();
+  recomputeAndDraw();
+}
+function exportJSON(){
+  const fix = computeFixPoint();
+  const data = { repo:'iki1uc/CONTINIUM', fix, matrix:W, date:new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='continuum-6x6.json'; a.click();
+  URL.revokeObjectURL(url);
+  log('Exported JSON');
+}
+
+/* --- Initialization --- */
+document.getElementById('btnStart').addEventListener('click', startLoop);
+document.getElementById('btnStop').addEventListener('click', stopLoop);
+document.getElementById('btnRecompute').addEventListener('click', recomputeAndDraw);
+document.getElementById('btnRandom').addEventListener('click', ()=>{ randomizeMatrix(); });
+document.getElementById('btnNormalize').addEventListener('click', normalizeRows);
+document.getElementById('btnExport').addEventListener('click', exportJSON);
+
+// init
+initMatrix();
+renderMatrixUI();
+renderLayerList();
+tryLoadModules().then(()=>{ recomputeAndDraw(); log('Module load attempted — fallbacks used where missing.'); });
+
+/* Utility: throttle recompute during slider drags */
+let recomputeTimeout=null;
+function scheduleRecompute(){ if(recomputeTimeout) clearTimeout(recomputeTimeout); recomputeTimeout = setTimeout(()=>{ recomputeAndDraw(); recomputeTimeout=null; }, 180); }
+</script>
+</body>
+</html>
