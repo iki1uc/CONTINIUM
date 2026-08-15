@@ -65,11 +65,15 @@ function ATOM_ANIM(t){
 // ======================================================
 // QS‑XI‑XTender Orbit
 // ======================================================
-function QSXI(t){
-    return {
-        tokio: CONTINIUM_KEY.orbitTokio(t),
-        corlu: CONTINIUM_KEY.orbitCorlu(t),
-        hh:    CONTINIUM_KEY.orbitHH(t)
+// QS‑XI‑XTender Dreieck
+ctx.strokeStyle = "#6cf";
+ctx.beginPath();
+ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tokio.y/30);
+ctx.lineTo(cx + scene.qsxi.corlu.x/30, cy + scene.qsxi.corlu.y/30);
+ctx.lineTo(cx + scene.qsxi.hh.x/30,    cy + scene.qsxi.hh.y/30);
+ctx.closePath();
+ctx.stroke();
+
     };
 }
 
