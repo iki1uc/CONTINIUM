@@ -43,31 +43,31 @@ import {
 } from "./um.js";
 
 // ==========================================
-// CONTINIUM ENGINE
+// CONTINIUM LOOP
 // ==========================================
-async function CONTINIUM_START(){
 
-    // Zeit / Orbit
+async function CONTINIUM_LOOP(){
+
     const t = performance.now() * 0.0004;
 
-    // 3D‑Orbit
+    // 3D Orbit
     const pos = CONTINIUM_KEY.pos(t);
 
-    // Slide‑Frame
+    // Slide
     const slide = CONTINIUM_KEY.slideFrame(pos);
 
-    // Stabilität
+    // Score
     const score = CONTINIUM_KEY.stability(pos);
 
-    // ATOM‑Sequenz
+    // ATOM
     const atom = CONTINIUM_KEY.sequence();
 
-    // UM‑Ebene
+    // UM
     const pipe = PIPELINE_3_6();
     const truth = CONTINIUM_TRUTH();
     const whirl = WHIRL({ x: 9, y: 6, z: 3 });
 
-    // LAUF‑Ebene
+    // LAUF
     const lauf = LAUF.komplett();
 
     // Szene
@@ -84,16 +84,15 @@ async function CONTINIUM_START(){
         frame: "CONTINIUM‑OS‑SZENE"
     };
 
-    return scene;
+    document.getElementById("out").textContent =
+        JSON.stringify(scene, null, 2);
+
+    requestAnimationFrame(CONTINIUM_LOOP);
 }
 
-// ==========================================
-// UI
-// ==========================================
-window.onload = async () => {
-    const out = await CONTINIUM_START();
-    document.getElementById("out").textContent =
-        JSON.stringify(out, null, 2);
+// Start
+window.onload = () => {
+    CONTINIUM_LOOP();
 };
 </script>
 
