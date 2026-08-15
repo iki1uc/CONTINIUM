@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>CONTINIUM · UM + LAUF · iki1uc</title>
+<title>CONTINIUM · OS · iki1uc</title>
 
 <style>
 body {
@@ -32,6 +32,8 @@ pre {
 </style>
 
 <script type="module">
+import { CONTINIUM_KEY } from "./CONTINIUM_KEY.js";
+import { LAUF } from "./lauf.js";
 import {
     GATE,
     WLOCH,
@@ -40,35 +42,54 @@ import {
     CONTINIUM_TRUTH
 } from "./um.js";
 
-import { LAUF } from "./lauf.js";
-
-// CONTINIUM Engine
+// ==========================================
+// CONTINIUM ENGINE
+// ==========================================
 async function CONTINIUM_START(){
 
+    // Zeit / Orbit
+    const t = performance.now() * 0.0004;
+
+    // 3D‑Orbit
+    const pos = CONTINIUM_KEY.pos(t);
+
+    // Slide‑Frame
+    const slide = CONTINIUM_KEY.slideFrame(pos);
+
+    // Stabilität
+    const score = CONTINIUM_KEY.stability(pos);
+
+    // ATOM‑Sequenz
+    const atom = CONTINIUM_KEY.sequence();
+
+    // UM‑Ebene
     const pipe = PIPELINE_3_6();
     const truth = CONTINIUM_TRUTH();
     const whirl = WHIRL({ x: 9, y: 6, z: 3 });
+
+    // LAUF‑Ebene
     const lauf = LAUF.komplett();
 
+    // Szene
     const scene = {
-        drift: whirl,
-        resonanz: lauf.resonanz,
-        stabil: lauf.stabil,
-        muster: lauf.vektor,
-        grund: lauf.grund,
-        frame: "CONTINIUM‑SZENE"
+        orbit: pos,
+        slide,
+        score,
+        atom,
+        lauf,
+        pipe,
+        truth,
+        whirl,
+        skills: CONTINIUM_KEY.skills,
+        frame: "CONTINIUM‑OS‑SZENE"
     };
 
-    return {
-        pipeline: pipe,
-        wahrheit: truth,
-        whirl,
-        lauf,
-        scene
-    };
+    return scene;
 }
 
+// ==========================================
 // UI
+// ==========================================
 window.onload = async () => {
     const out = await CONTINIUM_START();
     document.getElementById("out").textContent =
@@ -80,10 +101,10 @@ window.onload = async () => {
 
 <body>
 
-<h1>CONTINIUM · UM + LAUF · Stabilisationsachse · iki1uc</h1>
+<h1>CONTINIUM · OS · iki1uc</h1>
 
 <div class="block">
-    <pre id="out">Lade CONTINIUM…</pre>
+    <pre id="out">Starte CONTINIUM OS…</pre>
 </div>
 
 </body>
