@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>CONTINIUM · Stage OS · Full SYN·QUANT·CONST</title>
+<title>CONTINIUM · Stage OS · arg/xarg/arg3te Viewer</title>
 
 <style>
 body { margin:0; background:#000; color:#0f0; font-family:Consolas; }
@@ -40,59 +40,29 @@ cv.width = window.innerWidth;
 cv.height = window.innerHeight;
 const ctx = cv.getContext("2d");
 
-function TMP_PHYSIK(t){
-    const out = {};
-    for(const k in TMP_MATRIX) out[k] = TMP_MATRIX[k].calc(t);
-    return out;
-}
-
-function ATOM(t){
-    const seq = QUANT.atom.seq;
-    return seq[Math.floor((t*10) % seq.length)];
-}
-
-function SING(t){
-    const p = CONTINIUM_KEY.pos(t);
-    return QUANT.singular(p);
-}
-
-function draw(scene){
-    ctx.clearRect(0,0,cv.width,cv.height);
-
-    const cx = cv.width/2;
-    const cy = cv.height/2;
-
-    ctx.strokeStyle = "#6cf";
-    ctx.beginPath();
-    ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tokio.y/30);
-    ctx.lineTo(cx + scene.qsxi.corlu.x/30, cy + scene.qsxi.corlu.y/30);
-    ctx.lineTo(cx + scene.qsxi.hh.x/30,    cy + scene.qsxi.hh.y/30);
-    ctx.closePath();
-    ctx.stroke();
-
-    ctx.fillStyle = "#0f0";
-    ctx.font = "32px Consolas";
-    ctx.fillText(scene.atom, cx - 16, cy - 16);
-
-    ctx.strokeStyle = "#f00";
-    ctx.beginPath();
-    ctx.arc(cx, cy, scene.singular.radius/300, 0, Math.PI*2);
-    ctx.stroke();
+function arg(t){ return CONTINIUM_KEY.pos(t); }
+function xarg(a){ return SLIDE(a).vec; }
+function arg3te(t){
+    let e = 0;
+    for(const k in TMP_MATRIX) e += Math.abs(TMP_MATRIX[k].calc(t));
+    return e / 1200;
 }
 
 function LOOP(){
     const t = performance.now() * 0.0004;
 
-    const pos = CONTINIUM_KEY.pos(t);
-    const slide = SLIDE(pos);
+    const A = arg(t);
+    const X = xarg(A);
+    const E = arg3te(t);
 
     const scene = {
-        atom: ATOM(t),
+        arg: A,
+        xarg: X,
+        arg3te: E,
+        atom: QUANT.atom.seq[Math.floor((t*10)%QUANT.atom.seq.length)],
         qsxi: QUANT.qsxi(),
-        singular: SING(t),
-        orbit: pos,
-        slide,
-        tmp: TMP_PHYSIK(t),
+        singular: QUANT.singular(A),
+        tmp: Object.fromEntries(Object.entries(TMP_MATRIX).map(([k,v])=>[k,v.calc(t)])),
         mind: MIND_QUANT(),
         nc: NC_PIPELINE(),
         truth: CONTINIUM_TRUTH(),
@@ -101,8 +71,13 @@ function LOOP(){
         skills: CONTINIUM_KEY.skills
     };
 
-    draw(scene);
-    document.getElementById("out").textContent = JSON.stringify(scene, null, 2);
+    ctx.clearRect(0,0,cv.width,cv.height);
+
+    ctx.fillStyle="#0f0";
+    ctx.font="22px Consolas";
+    ctx.fillText("arg/xarg/arg3te Viewer", 40, 60);
+
+    document.getElementById("out").textContent = JSON.stringify(scene,null,2);
 
     orbitTick(0.016);
     requestAnimationFrame(LOOP);
