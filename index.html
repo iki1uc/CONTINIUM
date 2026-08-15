@@ -2,59 +2,125 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>CONTINIUM · Universal‑Übersetzer · Arena</title>
+<title>CONTINIUM · UNIVERSAL MASTER OS · iki1uc</title>
 
 <style>
 body { margin:0; background:#000; color:#0f0; font-family:Consolas; }
 #score {
     position:absolute; top:20px; left:20px;
-    width:320px; height:300px;
+    width:360px; height:480px;
     background:#111; border-left:3px solid #6cf;
     padding:15px; overflow:auto;
 }
 canvas { display:block; }
+h1 { color:#6cf; text-align:center; margin-top:20px; }
 </style>
 </head>
 
 <body>
-<pre id="score"></pre>
+
+<h1>CONTINIUM · UNIVERSAL MASTER OS</h1>
+<pre id="score">Starte CONTINIUM…</pre>
 <canvas id="cv"></canvas>
 
 <script type="module">
 
+/* ======================================================
+   IMPORTS — ALLE MODULE
+====================================================== */
 import { QUANT } from "./JS/CONST_QUANT.js";
 import { CONTINIUM_KEY } from "./JS/CONTINIUM_KEY.js";
 import { TMP_MATRIX } from "./tmp/360.js";
 import { SLIDE } from "./JS/slide.js";
 import { RUN8 } from "./JS/real.reaspo.scan.js";
 import { orbitTick } from "./JS/lauf.js";
+import { MIND_QUANT } from "./JS/MIND_QUANT.js";
+import { NC_PIPELINE } from "./JS/NC_PIPELINE.js";
 
+/* ======================================================
+   START
+====================================================== */
 RUN8();
 QUANT.start();
 
+/* ======================================================
+   CANVAS
+====================================================== */
 const cv = document.getElementById("cv");
 cv.width = window.innerWidth;
 cv.height = window.innerHeight;
 const ctx = cv.getContext("2d");
 
-const beings = [
-    { name:"tâbiat", color:"#0f0", score:0 },
-    { name:"lemming", color:"#6cf", score:0 },
-    { name:"pacman‑strich‑wech", color:"#f0f", score:0 }
+/* ======================================================
+   3 Geräte = PX / PC / GHOST
+====================================================== */
+const devices = [
+    { name:"PX", color:"#0f0", score:0 },
+    { name:"PC", color:"#6cf", score:0 },
+    { name:"GHOST", color:"#f0f", score:0 }
 ];
 
-function arg(t,i){
-    return CONTINIUM_KEY.pos(t+i);
-}
-
-function xarg(a){
-    return SLIDE(a).vec;
-}
-
-function arg3te(t){
+/* ======================================================
+   ARG / XARG / ARG3te
+====================================================== */
+function ARG(t,i){ return CONTINIUM_KEY.pos(t+i); }
+function XARG(a){ return SLIDE(a).vec; }
+function ARG3TE(t){
     let e = 0;
     for(const k in TMP_MATRIX) e += Math.abs(TMP_MATRIX[k].calc(t));
     return e / 1200;
 }
 
-function
+/* ======================================================
+   WETTE – Stabilitätsbewertung
+====================================================== */
+function WETTE(scene){
+    return (
+        Math.abs(scene.atom.length) +
+        Math.abs(scene.qsxi.tokio.x % 7) +
+        Math.abs(scene.singular.s.radius % 9)
+    );
+}
+
+/* ======================================================
+   UNIVERSAL DRAW
+====================================================== */
+function draw(scene){
+    ctx.clearRect(0,0,cv.width,cv.height);
+
+    const cx = cv.width/2;
+    const cy = cv.height/2;
+
+    // Orbit-Kreis
+    ctx.strokeStyle = "#6cf";
+    ctx.beginPath();
+    ctx.arc(cx, cy, 180, 0, Math.PI*2);
+    ctx.stroke();
+
+    // 3 Geräte
+    devices.forEach((d,i)=>{
+        ctx.fillStyle = d.color;
+        ctx.beginPath();
+        ctx.arc(
+            cx + Math.sin(scene.t + i)*140,
+            cy + Math.cos(scene.t + i)*140,
+            12, 0, Math.PI*2
+        );
+        ctx.fill();
+    });
+
+    // Atom
+    ctx.fillStyle = "#0f0";
+    ctx.font = "32px Consolas";
+    ctx.fillText(scene.atom, cx - 16, cy - 16);
+}
+
+/* ======================================================
+   LOOP
+====================================================== */
+function LOOP(){
+
+    const t = performance.now() * 0.0004;
+
+    const pos = CONTINIUM_KEY.pos(t);
+    const qsxi =
