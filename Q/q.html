@@ -1,0 +1,25 @@
+<script type="module">
+import { Q_PLANETS } from "./Q_PLANETS.js";
+
+document.body.innerHTML += `
+<h2>Q · Planetendaten</h2>
+
+<h3>Tokio</h3>
+<p>baseR: ${Q_PLANETS.tokio.baseR}</p>
+<p>relative r: ${Q_PLANETS.tokio.r_rel}</p>
+<p>relative v: ${Q_PLANETS.tokio.v_rel}</p>
+<p>relative T: ${Q_PLANETS.tokio.T_rel}</p>
+
+<h3>HH</h3>
+<p>baseR: ${Q_PLANETS.hh.baseR}</p>
+<p>relative r: ${Q_PLANETS.hh.r_rel}</p>
+<p>relative v: ${Q_PLANETS.hh.v_rel}</p>
+<p>relative T: ${Q_PLANETS.hh.T_rel}</p>
+
+<h3>Corlu</h3>
+<p>baseR: ${Q_PLANETS.corlu.baseR}</p>
+<p>relative r: ${Q_PLANETS.corlu.r_rel}</p>
+<p>relative v: ${Q_PLANETS.corlu.v_rel}</p>
+<p>relative T: ${Q_PLANETS.corlu.T_rel}</p>
+`;
+</script>
