@@ -1,0 +1,15 @@
+<script type="module">
+import { Q_PLANETS } from "../Q/Q_PLANETS.js";
+import { S_OrbitEngine } from "./S_OrbitEngine.js";
+
+const Engine = new S_OrbitEngine(1.989e36);
+
+const tokio = { name: Q_PLANETS.tokio.name, baseR: Q_PLANETS.tokio.baseR };
+const hh    = { name: Q_PLANETS.hh.name,    baseR: Q_PLANETS.hh.baseR };
+const corlu = { name: Q_PLANETS.corlu.name, baseR: Q_PLANETS.corlu.baseR };
+
+console.log(Engine.orbit(tokio));
+console.log(Engine.orbit(hh));
+console.log(Engine.orbit(corlu));
+</script>
+
