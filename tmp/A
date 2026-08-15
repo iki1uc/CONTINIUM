@@ -1,0 +1,5 @@
+export const A_TMP = {
+    sign: "A◉",
+    axis: 756,
+    calc(t){ return Math.sin(t) * this.axis; }
+};
