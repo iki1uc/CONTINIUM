@@ -2,15 +2,25 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>CONTINIUM · UNIVERSAL MASTER OS · iki1uc</title>
+<title>CONTINIUM · ALL‑X‑ALL Unified OS · iki1uc</title>
 
 <style>
-body { margin:0; background:#000; color:#0f0; font-family:Consolas; }
-#score {
-    position:absolute; top:20px; left:20px;
-    width:420px; height:540px;
-    background:#111; border-left:3px solid #6cf;
-    padding:15px; overflow:auto;
+body {
+    margin:0;
+    background:#000;
+    color:#0f0;
+    font-family:Consolas, monospace;
+}
+#out {
+    position:absolute;
+    top:20px;
+    left:20px;
+    width:420px;
+    height:540px;
+    overflow:auto;
+    background:#111;
+    border-left:3px solid #6cf;
+    padding:15px;
 }
 canvas { display:block; }
 h1 { color:#6cf; text-align:center; margin-top:20px; }
@@ -19,8 +29,8 @@ h1 { color:#6cf; text-align:center; margin-top:20px; }
 
 <body>
 
-<h1>CONTINIUM · UNIVERSAL MASTER OS</h1>
-<pre id="score">Starte CONTINIUM…</pre>
+<h1>CONTINIUM · ALL‑X‑ALL Unified OS</h1>
+<pre id="out">Starte CONTINIUM…</pre>
 <canvas id="cv"></canvas>
 
 <script type="module">
@@ -33,18 +43,17 @@ import { CONTINIUM_KEY } from "./JS/CONTINIUM_KEY.js";
 import { MIND_QUANT } from "./JS/MIND_QUANT.js";
 import { NC_PIPELINE } from "./JS/NC_PIPELINE.js";
 import { UHRWERK } from "./JS/uhrwerk.js";
-import { MATRIX_360 } from "./tmp/360.js";
+import { MATRIX_360 } from "./JS/MATRIX_360.js";
 import { SLIDE } from "./JS/slide.js";
 import { RUN8 } from "./JS/real.reaspo.scan.js";
 import { orbitTick } from "./JS/lauf.js";
-import { WHIRL, PIPELINE_3_6 } from "./JS/UM.js";
+import { WHIRL, PIPELINE_3_6, CONTINIUM_TRUTH } from "./JS/UM.js";
+import { PIPEBUILD } from "./JS/Pipebuild.js";
 
 /* ======================================================
-   START
+   PIPEBUILD ENGINE — Startsequenz
 ====================================================== */
-RUN8();
-QUANT.start();
-PIPELINE_3_6();
+const BOOT = PIPEBUILD();
 
 /* ======================================================
    CANVAS
@@ -55,18 +64,9 @@ cv.height = window.innerHeight;
 const ctx = cv.getContext("2d");
 
 /* ======================================================
-   3 Geräte = PX / PC / GHOST
-====================================================== */
-const devices = [
-    { name:"PX", color:"#0f0", score:0 },
-    { name:"PC", color:"#6cf", score:0 },
-    { name:"GHOST", color:"#f0f", score:0 }
-];
-
-/* ======================================================
    ARG / XARG / ARG3te
 ====================================================== */
-function ARG(t,i){ return CONTINIUM_KEY.pos(t+i); }
+function ARG(t){ return CONTINIUM_KEY.pos(t); }
 function XARG(a){ return SLIDE(a).slide; }
 function ARG3TE(t){
     let e = 0;
@@ -75,17 +75,37 @@ function ARG3TE(t){
 }
 
 /* ======================================================
-   WETTE – Stabilitätsbewertung
+   DRAW — Dreieck + Atom + Singularität
 ====================================================== */
-function WETTE(scene){
-    return (
-        Math.abs(scene.atom.length) +
-        Math.abs(scene.qsxi.tokio.x % 7) +
-        Math.abs(scene.singular.s.radius % 9)
-    );
+function draw(scene){
+    ctx.clearRect(0,0,cv.width,cv.height);
+
+    const cx = cv.width/2;
+    const cy = cv.height/2;
+
+    /* --- QSXI Dreieck --- */
+    ctx.strokeStyle = "#6cf";
+    ctx.beginPath();
+    ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tokio.y/30);
+    ctx.lineTo(cx + scene.qsxi.corlu.x/30, cy + scene.qsxi.corlu.y/30);
+    ctx.lineTo(cx + scene.qsxi.hh.x/30,    cy + scene.qsxi.hh.y/30);
+    ctx.closePath();
+    ctx.stroke();
+
+    /* --- Atom --- */
+    ctx.fillStyle = "#0f0";
+    ctx.font = "32px Consolas";
+    ctx.fillText(scene.atom, cx - 16, cy - 16);
+
+    /* --- Singularität --- */
+    ctx.strokeStyle = "#f00";
+    ctx.beginPath();
+    ctx.arc(cx, cy, scene.singular.s.radius/300, 0, Math.PI*2);
+    ctx.stroke();
 }
 
 /* ======================================================
-   UNIVERSAL DRAW
+   LOOP — ALL‑X‑ALL Fusion
 ====================================================== */
-function
+function CONTINIUM_LOOP(){
+
