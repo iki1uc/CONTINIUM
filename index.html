@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>CONTINIUM · Unified JS‑OS · iki1uc</title>
+<title>CONTINIUM · Unified JS‑OS · iki1uc · UPGRADE</title>
 
 <style>
 body {
@@ -15,8 +15,8 @@ body {
     position:absolute;
     top:20px;
     left:20px;
-    width:420px;
-    height:480px;
+    width:460px;
+    height:520px;
     overflow:auto;
     background:#111;
     border-left:3px solid #6cf;
@@ -31,9 +31,8 @@ h2 { color:#6cf; }
 <script type="module">
 
 /* ======================================================
-   IMPORTS — ALLE JS‑Dateien aus deinem neuen /JS/ Ordner
+   IMPORTS — ALLE JS‑Module aus deinem neuen /JS/ Ordner
 ====================================================== */
-
 import { QUANT } from "./JS/CONST_QUANT.js";
 import { CONTINIUM_KEY } from "./JS/CONTINIUM_KEY.js";
 import { MIND_QUANT } from "./JS/MIND_QUANT.js";
@@ -44,12 +43,12 @@ import { RUN8 } from "./JS/real.reaspo.scan.js";
 import { SLIDE } from "./JS/slide.js";
 
 /* ======================================================
-   IMPORTS — TMP‑Matrix (Orbit‑Physik)
+   TMP‑Matrix (Orbit‑Physik)
 ====================================================== */
 import { TMP_MATRIX } from "./tmp/360.js";
 
 /* ======================================================
-   DIGITAL COLD START (RUN8)
+   DIGITAL COLD START
 ====================================================== */
 RUN8();
 
@@ -72,17 +71,16 @@ const ctx = cv.getContext("2d");
 ====================================================== */
 const out = document.createElement("pre");
 out.id = "out";
-out.textContent = "Starte CONTINIUM Unified JS‑OS…";
+out.textContent = "Starte CONTINIUM Unified JS‑OS UPGRADE…";
 document.body.appendChild(out);
 
 /* ======================================================
-   TMP-Matrix Physik
+   TMP‑Matrix Physik
 ====================================================== */
 function TMP_PHYSIK(t){
     const out = {};
     for(const key in TMP_MATRIX){
-        const m = TMP_MATRIX[key];
-        out[key] = m.calc(t);
+        out[key] = TMP_MATRIX[key].calc(t);
     }
     return out;
 }
@@ -114,7 +112,7 @@ function draw(scene){
     const cy = cv.height/2;
 
     /* ---------------------------------------------
-       QS‑XI Dreieck (SYN + QUANT + SPRUNG)
+       QS‑XI Dreieck
     --------------------------------------------- */
     ctx.strokeStyle = "#6cf";
     ctx.beginPath();
@@ -140,16 +138,25 @@ function draw(scene){
     ctx.stroke();
 
     /* ---------------------------------------------
-       TMP-Matrix Orbit‑Physik
+       TMP‑Matrix Anzeige
     --------------------------------------------- */
     ctx.fillStyle = "#6cf";
     ctx.font = "18px Consolas";
 
-    let y = cy + 120;
+    let y = cy + 140;
     for(const key in scene.tmp){
-        ctx.fillText(`${key}: ${scene.tmp[key].toFixed(2)}`, cx - 180, y);
+        ctx.fillText(`${key}: ${scene.tmp[key].toFixed(2)}`, cx - 200, y);
         y += 22;
     }
+
+    /* ---------------------------------------------
+       SLIDE‑Vektor
+    --------------------------------------------- */
+    ctx.fillStyle = "#0f0";
+    ctx.fillText(
+        `SLIDE → x:${scene.slide.vec.x.toFixed(2)} y:${scene.slide.vec.y.toFixed(2)} z:${scene.slide.vec.z.toFixed(2)}`,
+        cx - 200, cy + 400
+    );
 }
 
 /* ======================================================
@@ -162,7 +169,7 @@ function CONTINIUM_LOOP(){
     const t = performance.now() * 0.0004;
 
     const pos = CONTINIUM_KEY.pos(t);
-    const slide = CONTINIUM_KEY.slideFrame(pos);
+    const slide = SLIDE(pos);
     const score = CONTINIUM_KEY.stability(pos);
 
     const atom = ATOM_ANIM(t);
@@ -172,3 +179,45 @@ function CONTINIUM_LOOP(){
     const tmp = TMP_PHYSIK(t);
     const truth = CONTINIUM_TRUTH();
     const whirl = WHIRL({ x: 9, y: 6, z: 3 });
+    const lauf = LAUF.komplett();
+    const mind = MIND_QUANT();
+    const nc = NC_PIPELINE();
+
+    const scene = {
+        orbit: pos,
+        slide,
+        score,
+        atom,
+        qsxi,
+        singular,
+        tmp,
+        lauf,
+        truth,
+        whirl,
+        mind,
+        nc,
+        quant: QUANT,
+        skills: CONTINIUM_KEY.skills
+    };
+
+    draw(scene);
+
+    out.textContent = JSON.stringify(scene, null, 2);
+
+    orbitTick(0.016);
+
+    requestAnimationFrame(CONTINIUM_LOOP);
+}
+
+/* ======================================================
+   START
+====================================================== */
+window.onload = () => {
+    pipe = PIPELINE_3_6();
+    CONTINIUM_LOOP();
+};
+</script>
+
+</head>
+<body></body>
+</html>
