@@ -1,102 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>KItriKIme · PX/PC/GHOST · iki1uc</title>
-
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CONTINIUM · 6x6 Kosmos · iki1uc</title>
 <style>
-body { background:#000; color:#0f0; font-family:Consolas; padding:20px; }
-h1, h2 { color:#6cf; }
-pre { background:#111; border:1px solid #333; padding:12px; max-height:160px; overflow:auto; }
-canvas { background:#111; border:1px solid #333; margin-top:20px; display:block; }
-a { color:#6cf; display:block; margin:6px 0; }
-section { margin-bottom:20px; }
-.controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
-button { background:#6cf; color:#000; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-weight:700; }
-button.small { padding:6px 8px; font-size:13px; }
-.status { margin-top:10px; color:#9f9; font-size:14px; }
+  :root{--bg:#000;--fg:#0f0;--muted:#6f6;--accent:#6cf;--card:#111}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:Consolas,monospace}
+  .wrap{display:grid;grid-template-columns:360px 1fr;gap:12px;height:100vh;padding:12px;box-sizing:border-box}
+  .card{background:var(--card);padding:12px;border-left:4px solid var(--accent);border-radius:6px;overflow:auto}
+  header h1{margin:0 0 8px;color:var(--accent);font-size:18px}
+  .layer{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,255,0,0.04)}
+  #out{white-space:pre-wrap;font-family:monospace;font-size:12px;height:150px;overflow:auto;background:#0a0a0a;padding:8px;border-radius:4px}
+  .controls{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+  button{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;margin-right:6px;cursor:pointer}
+  .small{padding:6px 8px;font-size:13px}
+  .matrix{width:100%;overflow:auto;margin-top:10px;border:1px solid rgba(255,255,255,0.03);padding:6px;border-radius:6px}
+  table.matrix-table{border-collapse:collapse;width:100%}
+  table.matrix-table th, table.matrix-table td{border:1px solid rgba(255,255,255,0.03);padding:6px;text-align:center}
+  input[type=range]{width:90px}
+  canvas{width:100%;height:calc(100vh - 120px);display:block;background:transparent;border-radius:6px}
+  .footer{font-size:12px;color:#8f8;margin-top:8px}
+  .point{font-weight:700;color:#9f9}
 </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <div class="card" aria-labelledby="title">
+      <header>
+        <h1 id="title">CONTINIUM — 6×6 Kosmos Monitor</h1>
+        <div class="note">SYN • QUANT • CONST • TMP • QSXI • ORBIT</div>
+      </header>
 
-<h1>KItriKIme · PX/PC/GHOST</h1>
+      <section style="margin-top:10px">
+        <div id="layersList" role="list"></div>
+      </section>
 
-<pre>
-CORE     = iki1uc
-VERSION  = 1.0
-CODE     = RAW‑KItriKIme
-AXES     = PX / PC / GHOST
-ENERGY   = 6e
-LAW      = 6d
-ORBIT    = 360°
-FORM     = Tri‑Hexa‑Orbit
-STATE    = ACTIVE
-READY    = 100%
-</pre>
-
-<section>
-<h2>KItriKIme‑Module</h2>
-<a href="./group.html">PX/PC/GHOST SCAN</a>
-<a href="./on3.html">RUN3 Operator</a>
-<a href="./run.html">Pipeline</a>
-<a href="./kit.js">KItriKIme Kernel</a>
-
-<div class="controls" role="toolbar" aria-label="KI Controls">
-  <button id="btnPx">Trigger PX</button>
-  <button id="btnOn3">Trigger ON3</button>
-  <button id="btnPipeline">Trigger Pipeline</button>
-  <button id="btnToggle" class="small">Toggle State</button>
-  <button id="btnHelp" class="small">Help</button>
-  <button id="btnClear" class="small">Clear Log</button>
-</div>
-
-<div class="status" id="status">Status: ready</div>
-</section>
-
-<section>
-<h2>KItriKIme · Tri‑Hexa‑Orbit Renderer</h2>
-<canvas id="kitCanvas" width="500" height="500"></canvas>
-</section>
-
-<section>
-<h2>Output / Log</h2>
-<pre id="out">Console output…</pre>
-</section>
-
-<script>
-// ------------------------------------------------------------
-// FRAME OBJEKT (unverändert)
-const frame = {
-    state: "ACTIVE",
-    pxCode: "?13/on3",
-    pqCode: "WRAIGHT",
-    help: "HELP_FAIL"
-};
-
-// Beispiel PX‑Fabrik (deine echte PX(frame) bleibt gleich, wir rufen sie)
-function PX(frame) {
-    // Beispielausgabe — deine echte Implementierung bleibt bestehen
-    return { axis: "PX", ok: true, info: `pxCode=${frame.pxCode}` };
-}
-
-// Platzhalterfunktionen für ON3 und Pipeline — ersetze / integriere echte Module
-function ON3(frame) {
-    return { result: "ON3_OK", details: { operator: frame.pqCode } };
-}
-function runPipeline(frame) {
-    // Simuliere asynchrone Pipeline (z. B. lädt Module, rechnet, liefert Ergebnis)
-    return new Promise(resolve => {
-        setTimeout(() => resolve({ pipeline: "DONE", time: Date.now() }), 700);
-    });
-}
-
-// DOM Elemente
-const out = document.getElementById('out');
-const statusEl = document.getElementById('status');
-const canvas = document.getElementById('kitCanvas');
-const ctx = canvas.getContext('2d');
-
-// einfache Logging‑Hilfen
-function log(...args){ console.log(...args); out.textContent += '\\n' + args.join(' '); out.scrollTop = out.scrollHeight
+      <section class="controls">
+        <button id="btnStart">Start Loop</button>
+        <button id="btnStop">Stop Loop</button>
+        <button id="btnRecompute">Recompute Fix‑Point</button>
+        <button id="btnRandom">Randomize Matrix</button>
+        <button id
 
