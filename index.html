@@ -1,93 +1,36 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>CONTINIUM · Unified OS · iki1uc</title>
+    <meta charset="UTF-8">
+    <title>81.tmp · System Start</title>
+    <style>
+        body {
+            background: #000;
+            color: #eee;
+            font-family: Consolas, monospace;
+            padding: 20px;
+        }
+        .block {
+            background: #111;
+            border: 1px solid #333;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        h2 {
+            color: #6cf;
+        }
+    </style>
+</head>
 
-<style>
-body {
-    margin:0;
-    background:#000;
-    color:#0f0;
-    font-family:Consolas, monospace;
-}
-#out {
-    position:absolute;
-    top:20px;
-    left:20px;
-    width:360px;
-    height:420px;
-    overflow:auto;
-    background:#111;
-    border-left:3px solid #6cf;
-    padding:15px;
-}
-canvas {
-    display:block;
-}
-</style>
+<body>
 
 <script type="module">
-import { QUANT } from "./CONST_QUANT.js";
-import { CONTINIUM_KEY } from "./CONTINIUM_KEY.js";
-import { LAUF } from "./lauf.js";
-import { orbitTick } from "./orbitTick.js";
-import { WHIRL, PIPELINE_3_6, CONTINIUM_TRUTH } from "./um.js";
 
-/* ======================================================
-   QUANTIFIER START
-   ====================================================== */
-QUANT.start();
+import { REAL_REASPO_SCAN } from "./real.reaspo.scan.js";
+import * as lauf from "./lauf.js";
+import * as um from "./um.js";
 
-/* ======================================================
-   CANVAS
-   ====================================================== */
-const cv = document.createElement("canvas");
-cv.width = window.innerWidth;
-cv.height = window.innerHeight;
-document.body.appendChild(cv);
-const ctx = cv.getContext("2d");
-
-/* ======================================================
-   TEXT‑OUTPUT
-   ====================================================== */
-const out = document.createElement("pre");
-out.id = "out";
-out.textContent = "Starte CONTINIUM OS…";
-document.body.appendChild(out);
-
-/* ======================================================
-   ATOM‑Beweis Animation
-   ====================================================== */
-function ATOM_ANIM(t){
-    const seq = QUANT.atom.seq;
-    return seq[Math.floor((t*10) % seq.length)];
-}
-
-/* ======================================================
-   Singularität
-   ====================================================== */
-function SINGULAR_VIEW(t){
-    const p = CONTINIUM_KEY.pos(t);
-    const s = QUANT.singular(p);
-    return { p, s };
-}
-
-/* ======================================================
-   VISUAL DRAW — EHRLICHER GEO/PHYSIKALISCHER LAUF
-   ====================================================== */
-function draw(scene){
-    ctx.clearRect(0,0,cv.width,cv.height);
-
-    const cx = cv.width/2;
-    const cy = cv.height/2;
-
-    /* --- MIND‑SKALA (81 / 243 / 2268) --- */
-    const M81   = scene.orbit.x / 81;
-    const M243  = scene.orbit.y / 243;
-    const M2268 = scene.orbit.z / 2268;
-
-    /* --- QS‑XI‑Dreieck --- */
-    ctx.strokeStyle = "#6cf";
-    ctx.beginPath();
-    ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tok
+function block(title, content) {
+    const div = document.createElement("div");
+    div.className = "block";
+    div.innerHTML = `<h2>
