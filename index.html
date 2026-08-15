@@ -1,158 +1,57 @@
-<!DOCTYPE html>
+<!--
+  © iki1uc wieimmer — CONTINIUM · Unified OS7
+  Licensed under the MIT License (see LICENSE).
+  Branding: "© iki1uc wieimmer" should remain visible on public pages.
+  No warranty — use at your own risk.
+-->
+<!doctype html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>CONTINIUM · ALL‑X‑ALL Unified OS · iki1uc</title>
 <style>
-body { margin:0; background:#000; color:#0f0; font-family:Consolas, monospace; }
-#out {
-    position:absolute; top:20px; left:20px;
-    width:420px; height:540px; overflow:auto;
-    background:#111; border-left:3px solid #6cf; padding:15px;
-    white-space:pre-wrap; font-family:monospace;
-}
-canvas { display:block; width:100vw; height:100vh; }
-h1 { color:#6cf; text-align:center; margin-top:20px; }
+  :root{--bg:#000;--fg:#0f0;--muted:#6f6;--accent:#6cf;--card:#111}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:Consolas,monospace}
+  .wrap{display:grid;grid-template-columns:360px 1fr;gap:12px;height:100vh;padding:12px;box-sizing:border-box}
+  .card{background:var(--card);padding:12px;border-left:4px solid var(--accent);border-radius:6px;overflow:auto}
+  header h1{margin:0 0 8px;color:var(--accent);font-size:18px}
+  #out{white-space:pre-wrap;font-family:monospace;font-size:12px;height:160px;overflow:auto;background:#0a0a0a;padding:8px;border-radius:4px}
+  .layer{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,255,0,0.04)}
+  .status{font-weight:700;color:var(--muted)}
+  .controls{margin-top:8px}
+  button{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;margin-right:6px;cursor:pointer}
+  small{display:block;color:#8f8;margin-top:8px}
+  canvas{width:100%;height:100%;display:block;background:transparent;border-radius:6px}
+  .footer{font-size:12px;color:#8f8;margin-top:8px}
+  .point{font-weight:700;color:#9f9}
+  .note{color:#9f9}
 </style>
 </head>
 <body>
-<h1>CONTINIUM · ALL‑X‑ALL Unified OS</h1>
-<pre id="out">Starte CONTINIUM…</pre>
-<canvas id="cv"></canvas>
+  <div class="wrap">
+    <div class="card" aria-labelledby="title">
+      <header>
+        <h1 id="title">CONTINIUM — 6‑Ebene Monitor</h1>
+        <div class="note">SYN • QUANT • CONST • TMP • QSXI • ORBIT</div>
+      </header>
 
-<script type="module">
-(async function start() {
-    const out = document.getElementById('out');
-    function log(...args){ console.log(...args); out.textContent += '\\n' + args.map(a => typeof a === 'string' ? a : JSON.stringify(a,null,2)).join(' '); }
-    function error(...args){ console.error(...args); out.textContent += '\\nERROR: ' + args.map(a => a && a.stack ? a.stack : String(a)).join(' '); }
+      <section aria-labelledby="layersTitle" style="margin-top:10px">
+        <div id="layersList" role="list">
+          <!-- Dynamically filled -->
+        </div>
+      </section>
 
-    // dynamische Ladereihenfolge — so bricht nicht die ganze Seite bei einem fehlenden Modul
-    const imports = {
-        QUANT: './JS/CONST_QUANT.js',
-        CONTINIUM_KEY: './JS/CONTINIUM_KEY.js',
-        MIND_QUANT: './JS/MIND_QUANT.js',
-        NC_PIPELINE: './JS/NC_PIPELINE.js',
-        UHRWERK: './JS/uhrwerk.js',
-        MATRIX_360: './JS/MATRIX_360.js',
-        SLIDE: './JS/slide.js',
-        RUN8: './JS/real.reaspo.scan.js',
-        orbitTickMod: './JS/lauf.js',
-        UM: './JS/UM.js',
-        PIPEBUILD: './JS/Pipebuild.js'
-    };
+      <section class="controls">
+        <button id="btnStart">Start</button>
+        <button id="btnStop">Stop</button>
+        <button id="btnRecompute">Recompute fix‑point</button>
+        <button id="btnExport">Export JSON</button>
+        <small>Tip: Wenn ein Modul fehlt, werden sichere Defaults benutzt; die Seite bricht nicht.</small>
+      </section>
 
-    const loaded = {};
-    try {
-        // Promise.allSettled, damit wir Fehler pro Modul sehen
-        const promises = Object.entries(imports).map(([key, path]) =>
-            import(path).then(m => ({ key, m })).catch(err => ({ key, err, path }))
-        );
-        const results = await Promise.all(promises);
-        for (const r of results) {
-            if (r.err) {
-                error(`Fehler beim Laden ${r.key} from ${r.path}:`, r.err);
-            } else {
-                loaded[r.key] = r.m;
-                log(`geladen: ${r.key}`);
-            }
-        }
-    } catch (e) {
-        error('Unerwarteter Import-Fehler:', e);
-    }
-
-    // Guard: überprüfe wichtige Exporte
-    const QUANT = loaded.QUANT?.QUANT ?? loaded.QUANT?.default;
-    const CONTINIUM_KEY = loaded.CONTINIUM_KEY?.CONTINIUM_KEY ?? loaded.CONTINIUM_KEY?.default;
-    const orbitTick = loaded.orbitTickMod?.orbitTick ?? loaded.orbitTickMod?.default;
-    const { WHIRL, PIPELINE_3_6, CONTINIUM_TRUTH } = loaded.UM ?? {};
-
-    if (!QUANT || !CONTINIUM_KEY) {
-        error('Wichtige Module fehlen: QUANT oder CONTINIUM_KEY. Prüfe die Dateinamen/Exports im ./JS Ordner.');
-        return;
-    }
-
-    // canvas initialisieren mit devicePixelRatio-scaling
-    const cv = document.getElementById('cv');
-    const ctx = cv.getContext('2d');
-    function resizeCanvas(){
-        const dpr = window.devicePixelRatio || 1;
-        cv.width = Math.floor(window.innerWidth * dpr);
-        cv.height = Math.floor(window.innerHeight * dpr);
-        cv.style.width = window.innerWidth + 'px';
-        cv.style.height = window.innerHeight + 'px';
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // Hilfs-Funktionen (falls Module fehlen, Ersatzfunktionen)
-    function ATOM_ANIM(t){
-        try { const seq = QUANT.atom.seq; return seq[Math.floor((t*10) % seq.length)]; }
-        catch(e){ return '?'; }
-    }
-    function SINGULAR_VIEW(t){
-        try { const p = CONTINIUM_KEY.pos(t); const s = QUANT.singular(p); return { p, s }; }
-        catch(e){ return { p:null, s:{ radius:0 } }; }
-    }
-
-    function draw(scene){
-        ctx.clearRect(0,0,cv.width,cv.height);
-        const cx = window.innerWidth/2;
-        const cy = window.innerHeight/2;
-
-        // Dreieck nur wenn qsxi existiert
-        if (scene.qsxi && scene.qsxi.tokio && scene.qsxi.corlu && scene.qsxi.hh) {
-            ctx.strokeStyle = "#6cf";
-            ctx.beginPath();
-            ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tokio.y/30);
-            ctx.lineTo(cx + scene.qsxi.corlu.x/30, cy + scene.qsxi.corlu.y/30);
-            ctx.lineTo(cx + scene.qsxi.hh.x/30,    cy + scene.qsxi.hh.y/30);
-            ctx.closePath(); ctx.stroke();
-        }
-
-        ctx.fillStyle = "#0f0"; ctx.font = "32px Consolas";
-        ctx.fillText(scene.atom ?? '?', cx - 16, cy - 16);
-
-        ctx.strokeStyle = "#f00";
-        ctx.beginPath();
-        ctx.arc(cx, cy, (scene.singular?.s?.radius ?? 0) / 300, 0, Math.PI*2);
-        ctx.stroke();
-    }
-
-    // Start QUANT etc.
-    try { if (typeof QUANT.start === 'function') QUANT.start(); } catch(e){ log('QUANT.start() fehlgeschlagen:', e); }
-
-    let lastTime = performance.now();
-    function CONTINIUM_LOOP(){
-        const t = performance.now() * 0.0004;
-        try {
-            const pos = CONTINIUM_KEY.pos?.(t) ?? null;
-            const slide = CONTINIUM_KEY.slideFrame?.(pos) ?? null;
-            const score = CONTINIUM_KEY.stability?.(pos) ?? null;
-            const atom = ATOM_ANIM(t);
-            const qsxi = QUANT.qsxi?.() ?? {};
-            const singular = SINGULAR_VIEW(t);
-            const truth = (typeof CONTINIUM_TRUTH === 'function') ? CONTINIUM_TRUTH() : null;
-            const whirl = (typeof WHIRL === 'function') ? WHIRL({ x:9,y:6,z:3 }) : null;
-            const lauf = (loaded.orbitTickMod?.LAUF?.komplett) ? loaded.orbitTickMod.LAUF.komplett() : null;
-
-            const scene = { orbit: pos, slide, score, atom, qsxi, singular, lauf, truth, whirl, quant: QUANT, skills: CONTINIUM_KEY.skills };
-            draw(scene);
-            out.textContent = JSON.stringify(scene, null, 2);
-
-            if (typeof orbitTick === 'function') orbitTick(0.016);
-        } catch (e) {
-            error('Fehler im Loop:', e);
-        }
-        requestAnimationFrame(CONTINIUM_LOOP);
-    }
-
-    // PIPEBUILD/BOOT falls vorhanden
-    try { if (typeof loaded.PIPEBUILD?.default === 'function') loaded.PIPEBUILD.default(); else if (typeof loaded.PIPEBUILD?.PIPEBUILD === 'function') loaded.PIPEBUILD.PIPEBUILD(); } catch(e){ log('PIPEBUILD Fehler:', e); }
-
-    // starte Loop
-    CONTINIUM_LOOP();
-})();
-</script>
-</body>
-</html>
+      <section style="margin-top:10px">
+        <div>Fix‑(Axiom)‑Punkt:</div>
+        <pre id="fixPoint" class="point">—</pre>
+        <div class="footer">© iki1uc wieimmer · CONTINIUM · Unified OS7</div>
+      </
