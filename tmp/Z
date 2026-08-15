@@ -1,0 +1,5 @@
+export const Z_TMP = {
+    sign: "Z◉",
+    axis: 756,
+    calc(t){ return Math.sin(t*0.22) * this.axis; }
+};
