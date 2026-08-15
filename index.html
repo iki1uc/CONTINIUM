@@ -65,15 +65,11 @@ function ATOM_ANIM(t){
 // ======================================================
 // QS‑XI‑XTender Orbit
 // ======================================================
-// QS‑XI‑XTender Dreieck
-ctx.strokeStyle = "#6cf";
-ctx.beginPath();
-ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tokio.y/30);
-ctx.lineTo(cx + scene.qsxi.corlu.x/30, cy + scene.qsxi.corlu.y/30);
-ctx.lineTo(cx + scene.qsxi.hh.x/30,    cy + scene.qsxi.hh.y/30);
-ctx.closePath();
-ctx.stroke();
-
+function QSXI(t){
+    return {
+        tokio: CONTINIUM_KEY.orbitTokio(t),
+        corlu: CONTINIUM_KEY.orbitCorlu(t),
+        hh:    CONTINIUM_KEY.orbitHH(t)
     };
 }
 
@@ -81,7 +77,7 @@ ctx.stroke();
 // Singularität
 // ======================================================
 function SINGULAR_VIEW(t){
-    const p = CONTINIUM_KEY.orbitTokio(t);
+    const p = CONTINIUM_KEY.pos(t); // richtige 3D‑Position
     const s = CONTINIUM_KEY.singularity(p);
     return { p, s };
 }
@@ -95,90 +91,4 @@ function draw(scene){
     const cx = cv.width/2;
     const cy = cv.height/2;
 
-    // QS‑XI‑XTender Dreieck
-    ctx.strokeStyle = "#6cf";
-    ctx.beginPath();
-    ctx.moveTo(cx + scene.qsxi.tokio.x/20, cy + scene.qsxi.tokio.y/20);
-    ctx.lineTo(cx + scene.qsxi.corlu.x/20, cy + scene.qsxi.corlu.y/20);
-    ctx.lineTo(cx + scene.qsxi.hh.x/20,    cy + scene.qsxi.hh.y/20);
-    ctx.closePath();
-    ctx.stroke();
-
-    // ATOM‑Beweis
-    ctx.fillStyle = "#0f0";
-    ctx.font = "32px Consolas";
-    ctx.fillText(scene.atom, cx - 16, cy - 16);
-
-    // Singularität (Schwarzes Loch)
-    ctx.strokeStyle = "#f00";
-    ctx.beginPath();
-    ctx.arc(cx, cy, scene.singular.s.radius/200, 0, Math.PI*2);
-    ctx.stroke();
-}
-
-// ======================================================
-// LOOP
-// ======================================================
-let pipe = null;
-
-function CONTINIUM_LOOP(){
-
-    const t = performance.now() * 0.0004;
-
-    // Orbit
-    const pos = CONTINIUM_KEY.orbitTokio(t);
-    const slide = CONTINIUM_KEY.slideFrame(pos);
-    const score = CONTINIUM_KEY.stability(pos);
-
-    // ATOM
-    const atom = ATOM_ANIM(t);
-
     // QS‑XI
-    const qsxi = QSXI(t);
-
-    // Singularität
-    const singular = SINGULAR_VIEW(t);
-
-    // UM + LAUF
-    const truth = CONTINIUM_TRUTH();
-    const whirl = WHIRL({ x: 9, y: 6, z: 3 });
-    const lauf = LAUF.komplett();
-
-    // Szene
-    const scene = {
-        orbit: pos,
-        slide,
-        score,
-        atom,
-        qsxi,
-        singular,
-        lauf,
-        truth,
-        whirl,
-        skills: CONTINIUM_KEY.skills
-    };
-
-    // VISUAL
-    draw(scene);
-
-    // TEXT
-    out.textContent = JSON.stringify(scene, null, 2);
-
-    // CORE‑Orbit‑Tick
-    orbitTick(0.016);
-
-    requestAnimationFrame(CONTINIUM_LOOP);
-}
-
-// ======================================================
-// START
-// ======================================================
-window.onload = () => {
-    pipe = PIPELINE_3_6(); // nur einmal
-    CONTINIUM_LOOP();
-};
-</script>
-
-</head>
-<body></body>
-</html>
