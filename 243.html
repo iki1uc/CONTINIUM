@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>CONTINIUM‑243 · Universal‑Übersetzer · Arena</title>
+
+<style>
+body { margin:0; background:#000; color:#0f0; font-family:Consolas; }
+#score {
+    position:absolute; top:20px; left:20px;
+    width:360px; height:420px;
+    background:#111; border-left:3px solid #6cf;
+    padding:15px; overflow:auto;
+}
+canvas { display:block; }
+</style>
+</head>
+
+<body>
+
+<pre id="score">Starte CONTINIUM‑243…</pre>
+<canvas id="cv"></canvas>
+
+<script type="module">
+
+import { QUANT } from "./JS/CONST_QUANT.js";
+import { CONTINIUM_KEY } from "./JS/CONTINIUM_KEY.js";
+import { TMP_MATRIX } from "./tmp/360.js";
+import { SLIDE } from "./JS/slide.js";
+import { RUN8 } from "./JS/real.reaspo.scan.js";
+import { orbitTick } from "./JS/lauf.js";
+
+RUN8();
+QUANT.start();
+
+const cv = document.getElementById("cv");
+cv.width = window.innerWidth;
+cv.height = window.innerHeight;
+const ctx = cv.getContext("2d");
+
+/* ======================================================
+   3 BEINGS = PX / PC / GHOST
+====================================================== */
+const beings = [
+    { name:"PX", color:"#0f0", score:0 },
+    { name:"PC", color:"#6cf", score:0 },
+    { name:"GHOST", color:"#f0f", score:0 }
+];
+
+/* ======================================================
+   ARG / XARG / ARG3te
+====================================================== */
+function arg(t,i){
+    return CONTINIUM_KEY.pos(t+i);
+}
+
+function xarg(a){
+    return SLIDE(a).vec;
+}
+
+function arg3te(t){
+    let e = 0;
+    for(const k in TMP_MATRIX) e += Math.abs(TMP_MATRIX[k].calc(t));
+    return e / 1200;
+}
+
+/* ======================================================
+   WETTE – Arena‑Score
+====================================================== */
+function WETTE(scene){
+    return (
+        Math.abs(scene.atom.length) +
+        Math.abs(scene.qsxi.tokio.x % 7) +
+        Math.abs(scene.singular.s.radius % 9)
+    );
+}
+
+/* ======================================================
+   DRAW
+====================================================== */
+function draw(scene){
+    ctx.clearRect(0,0,cv.width,cv.height);
+
+    const cx = cv.width/2;
+    const cy = cv.height/2;
+
+    // Arena‑Orbit
+    ctx.strokeStyle = "#6cf";
+    ctx.beginPath();
+    ctx.arc(cx, cy, 160, 0, Math.PI*2);
+    ctx.stroke();
+
+    // 3 Beings
+    beings.forEach((b,i)=>{
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.arc(
+            cx + Math.sin(scene.t + i)*120,
+            cy + Math.cos(scene.t + i)*120,
+            12, 0, Math.PI*2
+        );
+        ctx.fill();
+    });
+}
+
+/* ======================================================
+   LOOP
+====================================================== */
+function LOOP(){
+
+    const t = performance.now() * 0.0004;
+
+    const pos = CONTINIUM_KEY.pos(t);
+    const qsxi = QUANT.qsxi();
+    const atom = QUANT.atom.seq[Math.floor((t*10) % QUANT.atom.seq.length)];
+    const singular = { s: QUANT.singular(pos) };
+
+    const scene = { t, pos, qsxi, atom, singular };
+
+    // Arena‑Scores
+    beings[0].score = WETTE(scene) + arg3te(t);
+    beings[1].score = WETTE(scene) + xarg(pos).x;
+    beings[2].score = WETTE(scene) + xarg(pos).y;
+
+    draw(scene);
+
+    document.getElementById("score").textContent =
+        JSON.stringify({ scene, beings }, null, 2);
+
+    orbitTick(0.016);
+    requestAnimationFrame(LOOP);
+}
+
+window.onload = LOOP;
+
+</script>
+
+</body>
+</html>
