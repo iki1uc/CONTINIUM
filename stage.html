@@ -2,39 +2,115 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>CONTINIUM · STAGE‑OS</title>
+<title>CONTINIUM · Stage OS · Full SYN·QUANT·CONST</title>
 
 <style>
-body {
-    margin:0;
-    background:#000;
-    color:#6cf;
-    font-family:Consolas, monospace;
-    text-align:center;
-    padding-top:120px;
+body { margin:0; background:#000; color:#0f0; font-family:Consolas; }
+#out {
+    position:absolute; top:20px; left:20px;
+    width:520px; height:600px;
+    background:#111; border-left:3px solid #6cf;
+    padding:15px; overflow:auto;
 }
-h1 { font-size:42px; }
-pre {
-    background:#111;
-    border-left:3px solid #6cf;
-    padding:20px;
-    width:420px;
-    margin:40px auto;
-    text-align:left;
-}
+canvas { display:block; }
 </style>
+</head>
+
+<body>
+<pre id="out"></pre>
+<canvas id="cv"></canvas>
 
 <script type="module">
 
 import { QUANT } from "./JS/CONST_QUANT.js";
 import { CONTINIUM_KEY } from "./JS/CONTINIUM_KEY.js";
+import { MIND_QUANT } from "./JS/MIND_QUANT.js";
+import { NC_PIPELINE } from "./JS/NC_PIPELINE.js";
+import { WHIRL, PIPELINE_3_6, CONTINIUM_TRUTH } from "./JS/UM.js";
+import { LAUF } from "./JS/lauf.js";
+import { RUN8 } from "./JS/real.reaspo.scan.js";
+import { SLIDE } from "./JS/slide.js";
+import { TMP_MATRIX } from "./tmp/360.js";
 
+RUN8();
 QUANT.start();
 
-function STAGE_STATE(){
-    const t = performance.now() * 0.0004;
-    const pos = CONTINIUM_KEY.pos(t);
-    const singular = QUANT.singular(pos);
+const cv = document.getElementById("cv");
+cv.width = window.innerWidth;
+cv.height = window.innerHeight;
+const ctx = cv.getContext("2d");
 
-    return {
-        stage
+function TMP_PHYSIK(t){
+    const out = {};
+    for(const k in TMP_MATRIX) out[k] = TMP_MATRIX[k].calc(t);
+    return out;
+}
+
+function ATOM(t){
+    const seq = QUANT.atom.seq;
+    return seq[Math.floor((t*10) % seq.length)];
+}
+
+function SING(t){
+    const p = CONTINIUM_KEY.pos(t);
+    return QUANT.singular(p);
+}
+
+function draw(scene){
+    ctx.clearRect(0,0,cv.width,cv.height);
+
+    const cx = cv.width/2;
+    const cy = cv.height/2;
+
+    ctx.strokeStyle = "#6cf";
+    ctx.beginPath();
+    ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tokio.y/30);
+    ctx.lineTo(cx + scene.qsxi.corlu.x/30, cy + scene.qsxi.corlu.y/30);
+    ctx.lineTo(cx + scene.qsxi.hh.x/30,    cy + scene.qsxi.hh.y/30);
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.fillStyle = "#0f0";
+    ctx.font = "32px Consolas";
+    ctx.fillText(scene.atom, cx - 16, cy - 16);
+
+    ctx.strokeStyle = "#f00";
+    ctx.beginPath();
+    ctx.arc(cx, cy, scene.singular.radius/300, 0, Math.PI*2);
+    ctx.stroke();
+}
+
+function LOOP(){
+    const t = performance.now() * 0.0004;
+
+    const pos = CONTINIUM_KEY.pos(t);
+    const slide = SLIDE(pos);
+
+    const scene = {
+        atom: ATOM(t),
+        qsxi: QUANT.qsxi(),
+        singular: SING(t),
+        orbit: pos,
+        slide,
+        tmp: TMP_PHYSIK(t),
+        mind: MIND_QUANT(),
+        nc: NC_PIPELINE(),
+        truth: CONTINIUM_TRUTH(),
+        whirl: WHIRL({x:9,y:6,z:3}),
+        lauf: LAUF.komplett(),
+        skills: CONTINIUM_KEY.skills
+    };
+
+    draw(scene);
+    document.getElementById("out").textContent = JSON.stringify(scene, null, 2);
+
+    orbitTick(0.016);
+    requestAnimationFrame(LOOP);
+}
+
+PIPELINE_3_6();
+LOOP();
+
+</script>
+</body>
+</html>
