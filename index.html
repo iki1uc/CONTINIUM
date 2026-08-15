@@ -38,6 +38,44 @@ import {
 } from "./um.js";
 
 // ======================================================
+// QS‑XI‑XTender SPRUNG-ORBIT (SYN + QUANDT)
+// ======================================================
+
+// Orbit A → 1/3 Sprung (120°)
+let angleA = 0;
+
+// Orbit B → 90° Sprung
+let angleB = 0;
+
+// Orbit C → optional (45°)
+let angleC = 0;
+
+// Sprung jede Sekunde
+setInterval(()=>{
+    angleA += Math.PI * (2/3);   // 120°
+    angleB += Math.PI * (1/2);   // 90°
+    angleC += Math.PI * (1/4);   // 45°
+}, 1000);
+
+// Orbit-Funktionen
+function QSXI(){
+    return {
+        tokio: {
+            x: Math.cos(angleA) * 2268,
+            y: Math.sin(angleA) * 2268
+        },
+        corlu: {
+            x: Math.cos(angleB) * 756,
+            y: Math.sin(angleB) * 756
+        },
+        hh: {
+            x: Math.cos(angleC) * 243,
+            y: Math.sin(angleC) * 243
+        }
+    };
+}
+
+// ======================================================
 // CANVAS
 // ======================================================
 const cv = document.createElement("canvas");
@@ -63,21 +101,10 @@ function ATOM_ANIM(t){
 }
 
 // ======================================================
-// QS‑XI‑XTender Orbit
-// ======================================================
-function QSXI(t){
-    return {
-        tokio: CONTINIUM_KEY.orbitTokio(t),
-        corlu: CONTINIUM_KEY.orbitCorlu(t),
-        hh:    CONTINIUM_KEY.orbitHH(t)
-    };
-}
-
-// ======================================================
 // Singularität
 // ======================================================
 function SINGULAR_VIEW(t){
-    const p = CONTINIUM_KEY.pos(t); // richtige 3D‑Position
+    const p = CONTINIUM_KEY.pos(t);
     const s = CONTINIUM_KEY.singularity(p);
     return { p, s };
 }
@@ -91,4 +118,79 @@ function draw(scene){
     const cx = cv.width/2;
     const cy = cv.height/2;
 
-    // QS‑XI
+    // QS‑XI‑XTender Dreieck (SYN + QUANDT)
+    ctx.strokeStyle = "#6cf";
+    ctx.beginPath();
+    ctx.moveTo(cx + scene.qsxi.tokio.x/30, cy + scene.qsxi.tokio.y/30);
+    ctx.lineTo(cx + scene.qsxi.corlu.x/30, cy + scene.qsxi.corlu.y/30);
+    ctx.lineTo(cx + scene.qsxi.hh.x/30,    cy + scene.qsxi.hh.y/30);
+    ctx.closePath();
+    ctx.stroke();
+
+    // ATOM‑Beweis
+    ctx.fillStyle = "#0f0";
+    ctx.font = "32px Consolas";
+    ctx.fillText(scene.atom, cx - 16, cy - 16);
+
+    // Singularität (Schwarzes Loch)
+    ctx.strokeStyle = "#f00";
+    ctx.beginPath();
+    ctx.arc(cx, cy, scene.singular.s.radius/300, 0, Math.PI*2);
+    ctx.stroke();
+}
+
+// ======================================================
+// LOOP
+// ======================================================
+let pipe = null;
+
+function CONTINIUM_LOOP(){
+
+    const t = performance.now() * 0.0004;
+
+    const pos = CONTINIUM_KEY.pos(t);
+    const slide = CONTINIUM_KEY.slideFrame(pos);
+    const score = CONTINIUM_KEY.stability(pos);
+
+    const atom = ATOM_ANIM(t);
+    const qsxi = QSXI();
+    const singular = SINGULAR_VIEW(t);
+
+    const truth = CONTINIUM_TRUTH();
+    const whirl = WHIRL({ x: 9, y: 6, z: 3 });
+    const lauf = LAUF.komplett();
+
+    const scene = {
+        orbit: pos,
+        slide,
+        score,
+        atom,
+        qsxi,
+        singular,
+        lauf,
+        truth,
+        whirl,
+        skills: CONTINIUM_KEY.skills
+    };
+
+    draw(scene);
+
+    out.textContent = JSON.stringify(scene, null, 2);
+
+    orbitTick(0.016);
+
+    requestAnimationFrame(CONTINIUM_LOOP);
+}
+
+// ======================================================
+// START
+// ======================================================
+window.onload = () => {
+    pipe = PIPELINE_3_6();
+    CONTINIUM_LOOP();
+};
+</script>
+
+</head>
+<body></body>
+</html>
