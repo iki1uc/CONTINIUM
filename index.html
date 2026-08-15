@@ -1,19 +1,25 @@
+<!--
+  © iki1uc wieimmer — CONTINIUM · Unified OS7
+  Licensed under the MIT License (see LICENSE).
+  Branding: "© iki1uc wieimmer" should remain visible on public pages.
+  No warranty — use at your own risk.
+-->
 <!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CONTINIUM · 6x6 Kosmos · iki1uc</title>
+<title>CONTINIUM · 6×6 Kosmos · iki1uc</title>
 <style>
   :root{--bg:#000;--fg:#0f0;--muted:#6f6;--accent:#6cf;--card:#111}
   html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:Consolas,monospace}
-  .wrap{display:grid;grid-template-columns:360px 1fr;gap:12px;height:100vh;padding:12px;box-sizing:border-box}
+  .wrap{display:grid;grid-template-columns:380px 1fr;gap:12px;height:100vh;padding:12px;box-sizing:border-box}
   .card{background:var(--card);padding:12px;border-left:4px solid var(--accent);border-radius:6px;overflow:auto}
   header h1{margin:0 0 8px;color:var(--accent);font-size:18px}
   .layer{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,255,0,0.04)}
-  #out{white-space:pre-wrap;font-family:monospace;font-size:12px;height:150px;overflow:auto;background:#0a0a0a;padding:8px;border-radius:4px}
+  #out{white-space:pre-wrap;font-family:monospace;font-size:12px;height:140px;overflow:auto;background:#0a0a0a;padding:8px;border-radius:4px}
   .controls{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
-  button{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;margin-right:6px;cursor:pointer}
+  button{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;margin-right:6px;cursor:pointer;color:#000}
   .small{padding:6px 8px;font-size:13px}
   .matrix{width:100%;overflow:auto;margin-top:10px;border:1px solid rgba(255,255,255,0.03);padding:6px;border-radius:6px}
   table.matrix-table{border-collapse:collapse;width:100%}
@@ -22,13 +28,15 @@
   canvas{width:100%;height:calc(100vh - 120px);display:block;background:transparent;border-radius:6px}
   .footer{font-size:12px;color:#8f8;margin-top:8px}
   .point{font-weight:700;color:#9f9}
+  .screws {margin-top:8px}
+  .story-select {margin-top:8px}
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card" aria-labelledby="title">
       <header>
-        <h1 id="title">CONTINIUM — 6×6 Kosmos Monitor</h1>
+        <h1 id="title">CONTINIUM — 6×6 Kosmos / Reality</h1>
         <div class="note">SYN • QUANT • CONST • TMP • QSXI • ORBIT</div>
       </header>
 
@@ -36,9 +44,9 @@
         <div id="layersList" role="list"></div>
       </section>
 
-      <section class="controls">
-        <button id="btnStart">Start Loop</button>
-        <button id="btnStop">Stop Loop</button>
+      <section class="controls" aria-label="Kontrollen">
+        <button id="btnStart">Start Engine</button>
+        <button id="btnStop">Stop Engine</button>
         <button id="btnRecompute">Recompute Fix‑Point</button>
         <button id="btnRandom">Randomize Matrix</button>
         <button id="btnNormalize">Normalize Rows</button>
@@ -48,6 +56,18 @@
       <section class="matrix">
         <div style="font-weight:700;margin-bottom:6px">6×6 Einflussmatrix (Zeile = Ziel, Spalte = Quelle)</div>
         <div id="matrixContainer"></div>
+      </section>
+
+      <section class="screws" id="screwsUI"></section>
+
+      <section class="story-select">
+        <label for="story">Story‑Modus:</label>
+        <select id="story">
+          <option value="calm">calm</option>
+          <option value="active">active</option>
+          <option value="orbit">orbit</option>
+          <option value="chaos">chaos</option>
+        </select>
       </section>
 
       <section style="margin-top:8px">
@@ -73,18 +93,26 @@
   </div>
 
 <script type="module">
-/* 6x6 Kosmos index.html
-   - Layers: SYN, QUANT, CONST, TMP, QSXI, ORBIT
-   - 6x6 weight matrix W[target][source]
-   - compute per-layer scores, apply matrix to compute influenced scores
-   - combine to one axiomatischen Fix‑Punkt (x,y,z + meta)
-   - interactive sliders to tune weights
+/* CONTINIUM — 6x6 Reality index.html
+   - Robust module loading (./JS)
+   - 6x6 influence matrix W[target][source]
+   - CONST screws (stiffness, damping, bias)
+   - UHRWERK (RAF loop) & TMP engine (spring/damper)
+   - Story modes (calm/active/orbit/chaos)
+   - Export JSON, sliders, visual feedback
 */
 
 const layerOrder = ['SYN','QUANT','CONST','TMP','QSXI','ORBIT'];
 const N = layerOrder.length;
+const MODULE_MAP = {
+  SYN: './JS/SYN.js',
+  QUANT: './JS/CONST_QUANT.js',
+  CONST: './JS/CONST.js',
+  TMP: './JS/TMP.js',
+  QSXI: './JS/QSXI.js',
+  ORBIT: './JS/ORBIT.js'
+};
 
-// defaults & placeholders (falls Module fehlen)
 const defaults = {
   SYN: { orientation: 0 },
   QUANT: { energy: 1 },
@@ -94,20 +122,15 @@ const defaults = {
   ORBIT: { mass: 1 }
 };
 
-const MODULE_MAP = { // falls du module hast, setze Pfade hier
-  SYN: './JS/SYN.js',
-  QUANT: './JS/CONST_QUANT.js',
-  CONST: './JS/CONST.js',
-  TMP: './JS/TMP.js',
-  QSXI: './JS/QSXI.js',
-  ORBIT: './JS/ORBIT.js'
-};
+let loaded = {};           // module objects or null
+let status = {};           // load status
+let W = [];                // matrix W[target][source]
+let CONST_SCREWS = { stiffness: 1.0, damping: 0.4, bias: 0.0 };
+let uhr = { t: 0, running: true, speed: 1.0 };
+let storyMode = 'calm';
+let TMP_state = { velocity: 0, phase: 0 };
+let TMP_target = { velocity: 0, phase: 0 };
 
-const loaded = {};
-const status = {};
-const W = []; // matrix W[target][source]
-
-// UI refs
 const layersList = document.getElementById('layersList');
 const outEl = document.getElementById('out');
 const fixPointEl = document.getElementById('fixPoint');
@@ -115,154 +138,114 @@ const matrixContainer = document.getElementById('matrixContainer');
 const viz = document.getElementById('viz');
 const ctx = viz.getContext('2d');
 
-function log(...args){ console.log(...args); outEl.textContent += '\\n' + args.join(' '); outEl.scrollTop = outEl.scrollHeight; }
+function log(...a){ console.log(...a); outEl.textContent += '\\n' + a.join(' '); outEl.scrollTop = outEl.scrollHeight; }
 function warn(...a){ console.warn(...a); outEl.textContent += '\\nWARN: ' + a.join(' '); }
 function setLayerStatus(name, ok, msg=''){ status[name] = { loaded: !!ok, msg: msg || (ok ? 'loaded' : 'missing') }; renderLayerList(); }
+function renderLayerList(){ layersList.innerHTML=''; for(const n of layerOrder){ const s = status[n]||{loaded:false,msg:'unknown'}; const div=document.createElement('div'); div.className='layer'; div.innerHTML = `<div><strong>${n}</strong><div style="font-size:12px;color:#8f8">${s.msg}</div></div><div class="status">${s.loaded?'OK':'FALLBACK'}</div>`; layersList.appendChild(div);} }
 
-function renderLayerList(){
-  layersList.innerHTML = '';
-  for(const name of layerOrder){
-    const s = status[name] || {loaded:false,msg:'unknown'};
-    const div = document.createElement('div');
-    div.className = 'layer';
-    div.innerHTML = `<div><strong>${name}</strong><div style="font-size:12px;color:#8f8">${s.msg}</div></div>
-                     <div class="status">${s.loaded ? 'OK' : 'FALLBACK'}</div>`;
-    layersList.appendChild(div);
-  }
-}
-
-// init matrix with identity-ish small weights
+/* Matrix init & UI */
 function initMatrix(){
-  for(let i=0;i<N;i++){
-    W[i] = [];
-    for(let j=0;j<N;j++){
-      W[i][j] = (i===j) ? 0.8 : 0.1; // self-weight stronger by default
-    }
-  }
+  for(let i=0;i<N;i++){ W[i]=[]; for(let j=0;j<N;j++) W[i][j] = (i===j)?0.9:0.08; }
 }
-
-// render matrix UI (sliders)
 function renderMatrixUI(){
-  const table = document.createElement('table');
-  table.className = 'matrix-table';
-  const thead = document.createElement('thead');
-  const headRow = document.createElement('tr');
-  headRow.innerHTML = '<th></th>' + layerOrder.map(n => `<th>${n}</th>`).join('');
-  thead.appendChild(headRow); table.appendChild(thead);
-
+  const table = document.createElement('table'); table.className='matrix-table';
+  const thead = document.createElement('thead'); const headRow = document.createElement('tr');
+  headRow.innerHTML = '<th></th>' + layerOrder.map(n=>`<th>${n}</th>`).join(''); thead.appendChild(headRow); table.appendChild(thead);
   const tbody = document.createElement('tbody');
   for(let i=0;i<N;i++){
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<th>${layerOrder[i]}</th>`;
+    const tr=document.createElement('tr'); tr.innerHTML = `<th>${layerOrder[i]}</th>`;
     for(let j=0;j<N;j++){
-      const td = document.createElement('td');
-      const input = document.createElement('input');
-      input.type = 'range'; input.min = -1; input.max = 2; input.step = 0.05;
-      input.value = W[i][j];
-      input.dataset.i = i; input.dataset.j = j;
-      const span = document.createElement('div'); span.style.fontSize='11px'; span.style.marginTop='4px';
-      span.textContent = W[i][j];
-      input.addEventListener('input', (e)=>{
-        const ii = +e.target.dataset.i, jj = +e.target.dataset.j;
-        W[ii][jj] = +e.target.value;
-        span.textContent = Number(W[ii][jj].toFixed(2));
-        scheduleRecompute();
-      });
-      td.appendChild(input); td.appendChild(span);
-      tr.appendChild(td);
+      const td=document.createElement('td');
+      const input=document.createElement('input'); input.type='range'; input.min=-1; input.max=2; input.step=0.02; input.value=W[i][j];
+      input.dataset.i=i; input.dataset.j=j;
+      const span=document.createElement('div'); span.style.fontSize='11px'; span.style.marginTop='4px'; span.textContent=W[i][j];
+      input.addEventListener('input',(e)=>{ const ii=+e.target.dataset.i, jj=+e.target.dataset.j; W[ii][jj]=+e.target.value; span.textContent=Number(W[ii][jj].toFixed(2)); scheduleRecompute(); });
+      td.appendChild(input); td.appendChild(span); tr.appendChild(td);
     }
     tbody.appendChild(tr);
   }
-  table.appendChild(tbody);
-  matrixContainer.innerHTML = '';
-  matrixContainer.appendChild(table);
+  table.appendChild(tbody); matrixContainer.innerHTML=''; matrixContainer.appendChild(table);
 }
 
-// try dynamic module loading (tolerant)
+/* CONST screws UI */
+function renderScrewsUI(){
+  const c = document.getElementById('screwsUI'); c.innerHTML='';
+  const div = document.createElement('div'); div.innerHTML = `
+    <div style="font-weight:700;margin-top:8px">CONST‑Schrauben (Naturgesetze)</div>
+    <label>stiffness <input id="screw-stiff" type="range" min="0.1" max="4" step="0.05" value="${CONST_SCREWS.stiffness}"></label>
+    <span id="screw-stiff-val">${CONST_SCREWS.stiffness}</span><br>
+    <label>damping <input id="screw-damp" type="range" min="0" max="2" step="0.01" value="${CONST_SCREWS.damping}"></label>
+    <span id="screw-damp-val">${CONST_SCREWS.damping}</span><br>
+    <label>bias <input id="screw-bias" type="range" min="-1" max="1" step="0.01" value="${CONST_SCREWS.bias}"></label>
+    <span id="screw-bias-val">${CONST_SCREWS.bias}</span>
+  `;
+  c.appendChild(div);
+  document.getElementById('screw-stiff').addEventListener('input', e=>{ CONST_SCREWS.stiffness = Number(e.target.value); document.getElementById('screw-stiff-val').textContent = CONST_SCREWS.stiffness; scheduleRecompute(); });
+  document.getElementById('screw-damp').addEventListener('input', e=>{ CONST_SCREWS.damping = Number(e.target.value); document.getElementById('screw-damp-val').textContent = CONST_SCREWS.damping; scheduleRecompute(); });
+  document.getElementById('screw-bias').addEventListener('input', e=>{ CONST_SCREWS.bias = Number(e.target.value); document.getElementById('screw-bias-val').textContent = CONST_SCREWS.bias; scheduleRecompute(); });
+}
+
+/* Try to load real modules (tolerant) */
 async function tryLoadModules(){
-  const entries = Object.entries(MODULE_MAP);
-  for(const [key,path] of entries){
-    try{
-      const mod = await import(path);
-      loaded[key] = mod;
-      setLayerStatus(key, true, 'loaded');
-      log(`geladen: ${key}`);
-    }catch(e){
-      loaded[key] = null;
-      setLayerStatus(key, false, `missing: ${path}`);
-      warn(`Modul ${key} nicht geladen: ${path}`);
-    }
+  for(const [key,path] of Object.entries(MODULE_MAP)){
+    try{ const mod = await import(path); loaded[key]=mod; setLayerStatus(key,true,'loaded'); log('geladen:',key); } catch(e){ loaded[key]=null; setLayerStatus(key,false,`missing: ${path}`); warn('Modul nicht geladen:',key); }
   }
 }
 
-// extract per-layer scalar score (0..1 roughly)
+/* Layer scalar extraction (0..1) */
 function layerScore(name){
-  const mod = loaded[name];
   try{
-    if(!mod) {
-      // compute from defaults simple scalar
-      if(name==='QSXI') return 0.1;
-      if(name==='QUANT') return 0.6;
-      if(name==='CONST') return 0.7;
-      return 0.2;
+    const mod = loaded[name];
+    if(!mod){ // sensible defaults
+      return { SYN:0.2, QUANT:0.6, CONST:0.7, TMP:0.1, QSXI:0.1, ORBIT:0.5 }[name] ?? 0.2;
     }
-    // best-effort checks
-    if(name==='QUANT'){
-      const v = mod.QUANT?.energy ?? mod.default?.energy ?? mod.energy ?? 1;
-      return normalizeScalar(Number(v), 0, 10);
-    }
-    if(name==='CONST'){
-      const v = mod.CONST?.stability ?? mod.default?.stability ?? mod.stability ?? 1;
-      return normalizeScalar(Number(v), 0, 10);
-    }
-    if(name==='TMP'){
-      const v = mod.TMP?.velocity ?? mod.velocity ?? 0;
-      return normalizeScalar(Math.abs(Number(v)), 0, 50);
-    }
-    if(name==='SYN'){
-      const v = mod.SYN?.orientation ?? mod.orientation ?? 0;
-      return normalizeScalar(Math.abs(Number(v)), 0, Math.PI*2);
-    }
-    if(name==='QSXI'){
-      const pts = mod.QSXI?.points ?? mod.points ?? [{x:0,y:0}];
-      const r = Math.hypot(pts[0].x || 0, pts[0].y || 0);
-      return normalizeScalar(r, 0, 200);
-    }
-    if(name==='ORBIT'){
-      const v = mod.ORBIT?.mass ?? mod.mass ?? 1;
-      return normalizeScalar(Number(v), 0, 100);
-    }
+    if(name==='QUANT'){ const v = mod.QUANT?.energy ?? mod.default?.energy ?? mod.energy ?? 1; return normalizeScalar(Number(v),0,10); }
+    if(name==='CONST'){ const v = mod.CONST?.stability ?? mod.default?.stability ?? mod.stability ?? 1; return normalizeScalar(Number(v),0,10); }
+    if(name==='TMP'){ const v = mod.TMP?.velocity ?? mod.velocity ?? TMP_state.velocity ?? 0; return normalizeScalar(Math.abs(Number(v)),0,50); }
+    if(name==='SYN'){ const v = mod.SYN?.orientation ?? mod.orientation ?? 0; return normalizeScalar(Math.abs(Number(v)),0,Math.PI*2); }
+    if(name==='QSXI'){ const pts = mod.QSXI?.points ?? mod.points ?? defaults.QSXI.points; const r = Math.hypot(pts[0]?.x||0, pts[0]?.y||0); return normalizeScalar(r,0,200); }
+    if(name==='ORBIT'){ const v = mod.ORBIT?.mass ?? mod.mass ?? 1; return normalizeScalar(Number(v),0,100); }
     return 0.2;
-  }catch(e){
-    warn('layerScore read error', name, e);
-    return 0.1;
-  }
+  }catch(e){ warn('layerScore error', name, e); return 0.1; }
+}
+function normalizeScalar(v,min,max){ if(!isFinite(v)) return 0; const t=(v-min)/(max-min); return Math.max(0,Math.min(1,t)); }
+
+/* Nonlinear transforms (depth for QUANT and SYN) */
+function nonlinearTransform(v,name){
+  if(name==='QUANT') return Math.pow(Math.max(0,v),0.85);
+  if(name==='SYN') return Math.sin(v);
+  return v;
 }
 
-function normalizeScalar(v,min,max){
-  if(!isFinite(v)) return 0;
-  const t = (v - min) / (max - min);
-  return Math.max(0, Math.min(1, t));
-}
-
-// compute influenced scores: influenced[i] = sum_j W[i][j] * score[j]
+/* Compute influenced scores using W */
 function computeInfluencedScores(){
-  const scores = layerOrder.map(n => layerScore(n));
+  const base = layerOrder.map(n => nonlinearTransform(layerScore(n), n));
   const influenced = new Array(N).fill(0);
-  for(let i=0;i<N;i++){
-    let s=0;
-    for(let j=0;j<N;j++){
-      s += (W[i][j]||0) * scores[j];
-    }
-    influenced[i] = s;
-  }
-  return { scores, influenced };
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++) influenced[i] += (W[i][j]||0) * (base[j]||0);
+  return { base, influenced };
 }
 
-// Combine influenced scores to one Fix‑Point
+/* UHRWERK & TMP engine */
+function uhrwerkTick(dt){
+  uhr.t += dt * uhr.speed;
+  // story-driven TMP target
+  if(storyMode==='calm'){ TMP_target.velocity = 0.2 + 0.1*Math.sin(uhr.t*0.8); TMP_target.phase = uhr.t*0.2; }
+  else if(storyMode==='active'){ TMP_target.velocity = 0.6 + 0.4*Math.sin(uhr.t*2.2) + 0.1*Math.sin(uhr.t*7); TMP_target.phase = uhr.t*0.6; }
+  else if(storyMode==='orbit'){ TMP_target.velocity = 0.45 + 0.3*Math.sin(uhr.t*1.2); TMP_target.phase = uhr.t*0.5; }
+  else if(storyMode==='chaos'){ TMP_target.velocity = (Math.random()*1.2); TMP_target.phase = Math.random()*Math.PI*2; }
+}
+function applyTmpDynamics(dt){
+  const targetV = TMP_target.velocity || 0;
+  const curV = TMP_state.velocity || 0;
+  const acc = (CONST_SCREWS.stiffness * (targetV - curV)) - (CONST_SCREWS.damping * curV) + CONST_SCREWS.bias;
+  TMP_state.velocity = curV + acc * dt;
+  TMP_state.phase = (TMP_state.phase || 0) + (TMP_state.velocity * dt);
+}
+
+/* Compute Fix‑Point combining centroid + TMP/SYN influence + QUANT/ORBIT/CONST */
 function computeFixPoint(){
-  const { scores, influenced } = computeInfluencedScores();
-  // QSXI centroid if available
+  const { base, influenced } = computeInfluencedScores();
+  // centroid from QSXI
   let centroid = {x:0,y:0};
   try{
     const mod = loaded.QSXI;
@@ -271,145 +254,116 @@ function computeFixPoint(){
     centroid.x /= Math.max(1, (pts?.length||1)); centroid.y /= Math.max(1,(pts?.length||1));
   }catch(e){ centroid={x:0,y:0}; }
 
-  // Create x,y using centroid shifted by weighted orientation & tmp velocities
-  const syn = influenced[0] ?? 0;
-  const tmp = influenced[3] ?? 0;
-  const angle = (syn % 1) * Math.PI*2;
+  // use influenced SYN & TMP for x/y
+  const syn = (influenced[0] ?? 0);
+  const tmp = (influenced[3] ?? (normalizeScalar(Math.abs(TMP_state.velocity||0),0,50)));
+  const angle = (syn % 1) * Math.PI*2 + (TMP_state.phase || 0);
   const vx = Math.cos(angle) * tmp * 30;
   const vy = Math.sin(angle) * tmp * 30;
   const x = centroid.x + vx;
   const y = centroid.y + vy;
 
-  // z from weighted energy/mass/stability
-  const quant = influenced[1] ?? 1;
-  const orbit = influenced[5] ?? 1;
-  const cons = influenced[2] ?? 1;
-  const z = (quant * orbit) / Math.max(0.0001, Math.abs(cons) || 1);
+  // z from QUANT/ORBIT scaled by CONST stability (example formula, tweakable)
+  const quant = Math.max(0.0001, (influenced[1] ?? base[1] ?? 1));
+  const orbit = Math.max(0.0001, (influenced[5] ?? base[5] ?? 1));
+  const cons = Math.max(0.0001, Math.abs(influenced[2] ?? base[2] ?? 1));
+  const z = (quant * orbit) / (cons * CONST_SCREWS.stiffness);
 
   const point = { x: Number(x.toFixed(4)), y: Number(y.toFixed(4)), z: Number(z.toFixed(4)) };
-  const meta = { baseScores: scores, influenced, centroid, timestamp: Date.now() };
+  const meta = { base, influenced, centroid, tmpState: {...TMP_state}, screws:{...CONST_SCREWS}, story:storyMode, timestamp:Date.now() };
   return { point, meta };
 }
 
-/* --- Visualization --- */
+/* Visualization */
 function resizeCanvas(){
   const dpr = window.devicePixelRatio || 1;
   viz.width = Math.floor(viz.clientWidth * dpr);
   viz.height = Math.floor(viz.clientHeight * dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+window.addEventListener('resize', resizeCanvas); resizeCanvas();
 
 function drawGraph(fix){
   resizeCanvas();
   ctx.clearRect(0,0,viz.clientWidth,viz.clientHeight);
   const cx = viz.clientWidth/2, cy = viz.clientHeight/2;
-  // circle layout
-  const R = Math.min(cx,cy) - 80;
+  const R = Math.min(cx,cy) - 100;
   const angleStep = (Math.PI*2)/N;
   const pts = [];
-  for(let i=0;i<N;i++){
-    const a = -Math.PI/2 + i*angleStep;
-    pts.push({ x: cx + Math.cos(a)*R, y: cy + Math.sin(a)*R, name:layerOrder[i] });
+  for(let i=0;i<N;i++){ const a = -Math.PI/2 + i*angleStep; pts.push({ x: cx + Math.cos(a)*R, y: cy + Math.sin(a)*R, name:layerOrder[i] }); }
+
+  // edges
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    const w = W[i][j]||0; if(Math.abs(w)<0.02) continue;
+    ctx.beginPath();
+    ctx.strokeStyle = w>0 ? `rgba(108,204,255,${Math.min(1,Math.abs(w))})` : `rgba(255,100,100,${Math.min(1,Math.abs(w))})`;
+    ctx.lineWidth = Math.max(1, Math.abs(w)*6);
+    ctx.moveTo(pts[i].x, pts[i].y);
+    const mx = (pts[i].x + pts[j].x)/2 + (pts[i].y - pts[j].y)*0.08;
+    const my = (pts[i].y + pts[j].y)/2 + (pts[j].x - pts[i].x)*0.08;
+    ctx.quadraticCurveTo(mx,my, pts[j].x, pts[j].y); ctx.stroke();
   }
 
-  // draw edges weighted (use influenced as target weights)
-  const influenced = fix.meta.influenced;
+  // nodes
   for(let i=0;i<N;i++){
-    for(let j=0;j<N;j++){
-      const w = W[i][j] || 0;
-      if(Math.abs(w) < 0.02) continue;
-      ctx.beginPath();
-      ctx.strokeStyle = w>0 ? `rgba(108,204,255,${Math.min(1,Math.abs(w))})` : `rgba(255,100,100,${Math.min(1,Math.abs(w))})`;
-      ctx.lineWidth = Math.max(1, Math.abs(w)*6);
-      ctx.moveTo(pts[i].x, pts[i].y);
-      // curve toward source
-      const mx = (pts[i].x + pts[j].x)/2 + (pts[i].y - pts[j].y)*0.08;
-      const my = (pts[i].y + pts[j].y)/2 + (pts[j].x - pts[i].x)*0.08;
-      ctx.quadraticCurveTo(mx,my, pts[j].x, pts[j].y);
-      ctx.stroke();
-    }
-  }
-
-  // draw nodes
-  for(let i=0;i<N;i++){
-    const p = pts[i];
-    const infl = Math.max(0, Math.min(1, (fix.meta.influenced[i] || 0)));
+    const p = pts[i]; const infl = Math.max(0, Math.min(1, (fix.meta.influenced[i] || 0)));
     const radius = 12 + infl*18;
-    ctx.fillStyle = '#111';
-    ctx.strokeStyle = '#6cf';
-    ctx.beginPath(); ctx.arc(p.x,p.y,radius,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#111'; ctx.strokeStyle = '#6cf'; ctx.beginPath(); ctx.arc(p.x,p.y,radius,0,Math.PI*2); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#0f0'; ctx.font = '12px Consolas'; ctx.fillText(layerOrder[i], p.x - radius + 4, p.y + 4);
   }
 
-  // draw fix point indicator (centered representing x/y)
-  const fx = cx + fix.point.x / 30;
-  const fy = cy + fix.point.y / 30;
-  ctx.fillStyle = '#ffd54d';
-  ctx.beginPath(); ctx.arc(fx, fy, Math.max(6, Math.min(30, Math.abs(fix.point.z)/50)), 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#9f9'; ctx.font='12px Consolas';
-  ctx.fillText(`fix: x:${fix.point.x} y:${fix.point.y} z:${fix.point.z}`, 10, 18);
+  // fix point indicator
+  const fx = cx + fix.point.x / 30; const fy = cy + fix.point.y / 30;
+  ctx.fillStyle = '#ffd54d'; ctx.beginPath(); ctx.arc(fx, fy, Math.max(6, Math.min(30, Math.abs(fix.point.z)/50)), 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#9f9'; ctx.font='12px Consolas'; ctx.fillText(`fix: x:${fix.point.x} y:${fix.point.y} z:${fix.point.z}`, 10, 18);
 }
 
-/* --- Actions & UI --- */
-let loop=null;
-function startLoop(){
-  if(loop) return;
-  log('Loop gestartet');
-  loop = setInterval(()=>{ recomputeAndDraw(); }, 600);
+/* Actions & UI bindings */
+let loopRAF = null, lastRAF = performance.now();
+function rafLoop(now){
+  const dt = (now - lastRAF)/1000; lastRAF = now;
+  if(uhr.running){ uhrwerkTick(dt); applyTmpDynamics(dt); }
+  scheduleRecompute(); requestAnimationFrame(rafLoop);
 }
-function stopLoop(){
-  if(!loop) return;
-  clearInterval(loop); loop=null; log('Loop gestoppt');
-}
+
+function startEngine(){ if(!loopRAF){ lastRAF = performance.now(); loopRAF = requestAnimationFrame(rafLoop); log('Engine started'); } }
+function stopEngine(){ if(loopRAF){ cancelAnimationFrame(loopRAF); loopRAF = null; log('Engine stopped'); } }
+
 function recomputeAndDraw(){
-  const fix = computeFixPoint();
-  fixPointEl.textContent = JSON.stringify(fix.point, null, 2);
-  drawGraph(fix);
-  log('recomputed @ ' + new Date().toISOString());
-}
-function randomizeMatrix(){
-  for(let i=0;i<N;i++) for(let j=0;j<N;j++) W[i][j] = Number((Math.random()*2 - 0.2).toFixed(2)); // -0.2..1.8
-  renderMatrixUI();
-  recomputeAndDraw();
-}
-function normalizeRows(){
-  for(let i=0;i<N;i++){
-    const row = W[i];
-    const s = row.reduce((a,b)=>a+Math.abs(b),0) || 1;
-    for(let j=0;j<N;j++) row[j] = Number((row[j]/s).toFixed(4));
-  }
-  renderMatrixUI();
-  recomputeAndDraw();
-}
-function exportJSON(){
-  const fix = computeFixPoint();
-  const data = { repo:'iki1uc/CONTINIUM', fix, matrix:W, date:new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='continuum-6x6.json'; a.click();
-  URL.revokeObjectURL(url);
-  log('Exported JSON');
-}
+  const fix = computeFixPoint(); fixPointEl.textContent = JSON.stringify(fix.point,null,2); drawGraph(fix); log('recomputed @ ' + new Date().toISOString()); }
+function randomizeMatrix(){ for(let i=0;i<N;i++) for(let j=0;j<N;j++) W[i][j] = Number((Math.random()*2-0.2).toFixed(2)); renderMatrixUI(); recomputeAndDraw(); }
+function normalizeRows(){ for(let i=0;i<N;i++){ const row=W[i]; const s=row.reduce((a,b)=>a+Math.abs(b),0)||1; for(let j=0;j<N;j++) row[j]=Number((row[j]/s).toFixed(4)); } renderMatrixUI(); recomputeAndDraw(); }
+function exportJSON(){ const fix=computeFixPoint(); const data={repo:'iki1uc/CONTINIUM',fix,matrix:W, screws:CONST_SCREWS, story:storyMode, date:new Date().toISOString()}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='continuum-reality.json'; a.click(); URL.revokeObjectURL(url); log('Exported JSON'); }
 
-/* --- Initialization --- */
-document.getElementById('btnStart').addEventListener('click', startLoop);
-document.getElementById('btnStop').addEventListener('click', stopLoop);
+/* Recompute throttling for slider drags */
+let recomputeTimeout=null;
+function scheduleRecompute(){ if(recomputeTimeout) clearTimeout(recomputeTimeout); recomputeTimeout = setTimeout(()=>{ recomputeAndDraw(); recomputeTimeout=null; }, 150); }
+
+/* Event wiring */
+document.getElementById('btnStart').addEventListener('click', ()=>{ uhr.running = true; startEngine(); });
+document.getElementById('btnStop').addEventListener('click', ()=>{ uhr.running = false; stopEngine(); });
 document.getElementById('btnRecompute').addEventListener('click', recomputeAndDraw);
-document.getElementById('btnRandom').addEventListener('click', ()=>{ randomizeMatrix(); });
+document.getElementById('btnRandom').addEventListener('click', randomizeMatrix);
 document.getElementById('btnNormalize').addEventListener('click', normalizeRows);
 document.getElementById('btnExport').addEventListener('click', exportJSON);
+document.getElementById('story').addEventListener('change', e=>{ storyMode = e.target.value; log('Story set to', storyMode); });
 
-// init
-initMatrix();
-renderMatrixUI();
-renderLayerList();
-tryLoadModules().then(()=>{ recomputeAndDraw(); log('Module load attempted — fallbacks used where missing.'); });
+/* Initialization */
+function init(){
+  initMatrix(); renderMatrixUI(); renderScrewsUI(); renderLayerList();
+  tryLoadModules().then(()=>{ recomputeAndDraw(); log('Init complete — modules tried and defaults used where missing.'); });
+  // auto-start small RAF so TMP runs
+  startEngine();
+  // attach key shortcuts for quick testing
+  window.addEventListener('keydown', (e)=>{ if(e.key==='r') randomizeMatrix(); if(e.key==='s') startEngine(); if(e.key==='x') stopEngine(); if(e.key==='e') exportJSON(); });
+}
+init();
 
-/* Utility: throttle recompute during slider drags */
-let recomputeTimeout=null;
-function scheduleRecompute(){ if(recomputeTimeout) clearTimeout(recomputeTimeout); recomputeTimeout = setTimeout(()=>{ recomputeAndDraw(); recomputeTimeout=null; }, 180); }
+/* Utility for module authoring: allow injecting TMP_state externally (module can update) */
+window.CONTINIUM = window.CONTINIUM || {};
+window.CONTINIUM.setTMPState = (s)=>{ TMP_state = {...TMP_state, ...s}; };
+window.CONTINIUM.setModule = (name,obj)=>{ loaded[name]=obj; setLayerStatus(name, !!obj, obj? 'injected' : 'removed'); scheduleRecompute(); };
+
 </script>
 </body>
 </html>
