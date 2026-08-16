@@ -1,0 +1,12 @@
+NC.SYSTEM = {
+  CONST_90: CONST_90,
+  ach_syn: ach.syn,
+  roar_pulse: roar.pulse,
+  ARC: "active",
+  ARCHIEF: "stable",
+  RAW: "locked",
+  MODE: "const.run[8]",
+  STATE: "continuum",
+  KEYLESS: true,
+  SELF_PROTECT: true
+}
