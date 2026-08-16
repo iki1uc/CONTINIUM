@@ -1,1 +1,7 @@
+ach.syn = {
+  X: 0,
+  Y: 1,
+  angle: 90,
+  respoWeight: 1/φ
+}
 
