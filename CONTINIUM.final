@@ -1,0 +1,18 @@
+CONTINIUM = {
+  AXIS: {
+    X: cos(t),
+    Y: sin(t),
+    Z: sin(1.3t)
+  },
+
+  LAYERS: [3, 9, 27],   // 3^n
+
+  FIELD: 540,           // 3 × 180°
+
+  RESPO: (SYN + QUANT) / φ,
+
+  BALANCE: {
+    target: φ⁻¹,        // 0.618
+    damping: (SYN ↔ QUANT)
+  }
+}
