@@ -1,369 +1,847 @@
-<!--
-  © iki1uc wieimmer — CONTINIUM · Unified OS7
-  Licensed under the MIT License (see LICENSE).
-  Branding: "© iki1uc wieimmer" should remain visible on public pages.
-  No warranty — use at your own risk.
--->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CONTINIUM · 6×6 Kosmos · iki1uc</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONTINIUM · SYNCHRON · PRIORISIERBAR · SCHRAUBEN</title>
+
 <style>
-  :root{--bg:#000;--fg:#0f0;--muted:#6f6;--accent:#6cf;--card:#111}
-  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:Consolas,monospace}
-  .wrap{display:grid;grid-template-columns:380px 1fr;gap:12px;height:100vh;padding:12px;box-sizing:border-box}
-  .card{background:var(--card);padding:12px;border-left:4px solid var(--accent);border-radius:6px;overflow:auto}
-  header h1{margin:0 0 8px;color:var(--accent);font-size:18px}
-  .layer{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,255,0,0.04)}
-  #out{white-space:pre-wrap;font-family:monospace;font-size:12px;height:140px;overflow:auto;background:#0a0a0a;padding:8px;border-radius:4px}
-  .controls{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
-  button{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;margin-right:6px;cursor:pointer;color:#000}
-  .small{padding:6px 8px;font-size:13px}
-  .matrix{width:100%;overflow:auto;margin-top:10px;border:1px solid rgba(255,255,255,0.03);padding:6px;border-radius:6px}
-  table.matrix-table{border-collapse:collapse;width:100%}
-  table.matrix-table th, table.matrix-table td{border:1px solid rgba(255,255,255,0.03);padding:6px;text-align:center}
-  input[type=range]{width:90px}
-  canvas{width:100%;height:calc(100vh - 120px);display:block;background:transparent;border-radius:6px}
-  .footer{font-size:12px;color:#8f8;margin-top:8px}
-  .point{font-weight:700;color:#9f9}
-  .screws {margin-top:8px}
-  .story-select {margin-top:8px}
+:root {
+    --bg: #0a0a12;
+    --fg: #0ff;
+    --syn: #ff6b6b;
+    --quant: #6b6bff;
+    --respo: #ffd93d;
+    --gold: #ffd700;
+    --tokio: #ff6b6b;
+    --corlu: #6bff6b;
+    --hh: #6b6bff;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Consolas', monospace;
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 6px;
+    padding: 10px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+header h1 {
+    font-size: 16px;
+    color: var(--gold);
+    text-shadow: 0 0 20px var(--gold);
+    letter-spacing: 2px;
+}
+header h1 .syn { color: var(--syn); }
+header h1 .quant { color: var(--quant); }
+header h1 .respo { color: var(--respo); }
+#info-bar { font-size: 10px; color: #666; display: flex; gap: 10px; align-items: center; }
+
+main {
+    display: grid;
+    grid-template-columns: 3fr 1.2fr;
+    gap: 8px;
+    height: 100%;
+    min-height: 0;
+}
+
+#canvas-wrap {
+    background: #0a0a0f;
+    border: 1px solid #1a1a2a;
+    border-radius: 12px;
+    padding: 6px;
+    position: relative;
+    overflow: hidden;
+}
+#canvas-wrap canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    display: block;
+}
+
+#panel {
+    background: #0a0a0f;
+    border: 1px solid #1a1a2a;
+    border-radius: 12px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    max-height: 100%;
+}
+#panel h3 { font-size: 10px; color: #666; border-bottom: 1px solid #1a1a2a; padding-bottom: 4px; }
+
+#log {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 8px;
+    color: #6a6a8a;
+    line-height: 1.4;
+    min-height: 50px;
+    max-height: 120px;
+    background: #06060a;
+    border-radius: 4px;
+    padding: 3px 5px;
+}
+#log .entry { padding: 1px 0; border-bottom: 1px solid #0a0a12; }
+#log .time { color: #444; }
+#log .msg.syn { color: var(--syn); }
+#log .msg.quant { color: var(--quant); }
+#log .msg.respo { color: var(--respo); }
+#log .msg.ok { color: #4f4; }
+#log .msg.warn { color: #ff4; }
+
+#metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 3px;
+    font-size: 8px;
+}
+.metric {
+    background: #0e0e1a;
+    border-radius: 4px;
+    padding: 4px 6px;
+    text-align: center;
+    border: 1px solid #1a1a2a;
+}
+.metric .label { color: #666; font-size: 7px; text-transform: uppercase; }
+.metric .value { font-size: 12px; font-weight: bold; }
+.metric.syn .value { color: var(--syn); }
+.metric.quant .value { color: var(--quant); }
+.metric.respo .value { color: var(--respo); }
+.metric.sync .value { color: var(--gold); }
+
+#controls {
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+button {
+    background: #111;
+    color: var(--fg);
+    border: 1px solid #333;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 9px;
+    transition: all 0.2s;
+}
+button:hover { background: #1a1a2a; border-color: var(--gold); }
+button:active { transform: scale(0.95); }
+button.primary { border-color: var(--gold); color: var(--gold); }
+button.primary:hover { background: var(--gold); color: #000; }
+button.syn { border-color: var(--syn); color: var(--syn); }
+button.syn:hover { background: var(--syn); color: #000; }
+button.quant { border-color: var(--quant); color: var(--quant); }
+button.quant:hover { background: var(--quant); color: #000; }
+button.respo { border-color: var(--respo); color: var(--respo); }
+button.respo:hover { background: var(--respo); color: #000; }
+button.danger { border-color: #f44; color: #f44; }
+button.danger:hover { background: #f44; color: #000; }
+
+/* SCHRAUBEN */
+.screw-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+    font-size: 8px;
+    background: #0a0a12;
+    border-radius: 4px;
+    padding: 4px;
+}
+.screw {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+.screw label { color: #666; font-size: 7px; text-transform: uppercase; }
+.screw input[type="range"] { width: 100%; height: 4px; background: #1a1a2a; border-radius: 2px; }
+.screw input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+}
+.screw .val { color: var(--gold); font-size: 9px; font-weight: bold; }
+
+#priority {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 9px;
+    color: #666;
+}
+#priority input[type="range"] { width: 80px; height: 4px; background: #1a1a2a; border-radius: 2px; }
+#priority input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+}
+
+@media (max-width: 800px) {
+    main { grid-template-columns: 1fr; }
+    #panel { max-height: 250px; }
+    .screw-group { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card" aria-labelledby="title">
-      <header>
-        <h1 id="title">CONTINIUM — 6×6 Kosmos / Reality</h1>
-        <div class="note">SYN • QUANT • CONST • TMP • QSXI • ORBIT</div>
-      </header>
 
-      <section style="margin-top:10px">
-        <div id="layersList" role="list"></div>
-      </section>
+<header>
+    <h1>
+        <span class="syn">⟳ SYN</span>
+        <span style="color:#666;">·</span>
+        <span class="quant">⚛ QUANT</span>
+        <span style="color:#666;">·</span>
+        <span class="respo">◈ RESPO</span>
+        <span style="color:#666;">·</span>
+        <span style="color:var(--gold);">SYNCHRON</span>
+    </h1>
+    <div id="info-bar">
+        <span id="clock">⏱️ --:--:--</span>
+        <span id="state-display" style="color:var(--gold);">● bereit</span>
+        <span id="cycle-display" style="color:#666;">Zyklus 0</span>
+    </div>
+</header>
 
-      <section class="controls" aria-label="Kontrollen">
-        <button id="btnStart">Start Engine</button>
-        <button id="btnStop">Stop Engine</button>
-        <button id="btnRecompute">Recompute Fix‑Point</button>
-        <button id="btnRandom">Randomize Matrix</button>
-        <button id="btnNormalize">Normalize Rows</button>
-        <button id="btnExport">Export JSON</button>
-      </section>
-
-      <section class="matrix">
-        <div style="font-weight:700;margin-bottom:6px">6×6 Einflussmatrix (Zeile = Ziel, Spalte = Quelle)</div>
-        <div id="matrixContainer"></div>
-      </section>
-
-      <section class="screws" id="screwsUI"></section>
-
-      <section class="story-select">
-        <label for="story">Story‑Modus:</label>
-        <select id="story">
-          <option value="calm">calm</option>
-          <option value="active">active</option>
-          <option value="orbit">orbit</option>
-          <option value="chaos">chaos</option>
-        </select>
-      </section>
-
-      <section style="margin-top:8px">
-        <div>Fix‑Point:</div>
-        <pre id="fixPoint" class="point">—</pre>
-        <div class="footer">© iki1uc wieimmer · CONTINIUM · Unified OS7</div>
-      </section>
-
-      <section style="margin-top:8px">
-        <div id="logTitle">Log</div>
-        <div id="out">Init…</div>
-      </section>
+<main>
+    <div id="canvas-wrap">
+        <canvas id="continCanvas"></canvas>
     </div>
 
-    <div class="card" style="display:flex;flex-direction:column;">
-      <canvas id="viz"></canvas>
-      <div style="margin-top:8px">
-        <div style="display:flex;gap:8px;align-items:center">
-          <div class="note">Visualisierung: Knoten = Ebenen, Kanten = gewichtete Einflüsse</div>
+    <div id="panel">
+        <h3>📊 SYNCHRON · PRIORITÄT · SCHRAUBEN</h3>
+
+        <div id="metrics">
+            <div class="metric syn">
+                <div class="label">⟳ SYN</div>
+                <div class="value" id="syn-value">0.00</div>
+            </div>
+            <div class="metric quant">
+                <div class="label">⚛ QUANT</div>
+                <div class="value" id="quant-value">0.00</div>
+            </div>
+            <div class="metric respo">
+                <div class="label">◈ RESPO</div>
+                <div class="value" id="respo-value">0.00</div>
+            </div>
+            <div class="metric sync">
+                <div class="label">⟳ SYNC</div>
+                <div class="value" id="sync-value">0.00</div>
+            </div>
         </div>
-      </div>
+
+        <!-- PRIORITÄT -->
+        <div id="priority">
+            <span>Priorität:</span>
+            <span style="color:var(--syn);">SYN</span>
+            <input type="range" id="priority-slider" min="0" max="1" step="0.01" value="0.5">
+            <span style="color:var(--quant);">QUANT</span>
+            <span id="priority-val" style="color:var(--gold);">0.50</span>
+        </div>
+
+        <!-- SCHRAUBEN -->
+        <div class="screw-group">
+            <div class="screw">
+                <label>Stiffness</label>
+                <input type="range" id="screw-stiff" min="0.1" max="4" step="0.05" value="1.0">
+                <span class="val" id="screw-stiff-val">1.00</span>
+            </div>
+            <div class="screw">
+                <label>Damping</label>
+                <input type="range" id="screw-damp" min="0" max="2" step="0.01" value="0.4">
+                <span class="val" id="screw-damp-val">0.40</span>
+            </div>
+            <div class="screw">
+                <label>Bias</label>
+                <input type="range" id="screw-bias" min="-1" max="1" step="0.01" value="0.0">
+                <span class="val" id="screw-bias-val">0.00</span>
+            </div>
+        </div>
+
+        <div id="log">
+            <div class="entry"><span class="time">[INIT]</span> <span class="msg respo">◈ CONTINIUM · SYNCHRON geladen</span></div>
+            <div class="entry"><span class="time">[INIT]</span> <span class="msg syn">⟳ SYN · 90°-Relation</span></div>
+            <div class="entry"><span class="time">[INIT]</span> <span class="msg quant">⚛ QUANT · 120°-Relation</span></div>
+            <div class="entry"><span class="time">[INIT]</span> <span class="msg ok">✅ Synchron · Priorisierbar · Schrauben</span></div>
+        </div>
+
+        <div id="controls">
+            <button class="primary" id="btn-start">▶ START</button>
+            <button class="syn" id="btn-syn">⟳ SYN</button>
+            <button class="quant" id="btn-quant">⚛ QUANT</button>
+            <button class="respo" id="btn-respo">◈ RESPO</button>
+            <button class="danger" id="btn-reset">⟲ RESET</button>
+            <button id="btn-auto">▶ AUTO</button>
+        </div>
     </div>
-  </div>
+</main>
 
-<script type="module">
-/* CONTINIUM — 6x6 Reality index.html
-   - Robust module loading (./JS)
-   - 6x6 influence matrix W[target][source]
-   - CONST screws (stiffness, damping, bias)
-   - UHRWERK (RAF loop) & TMP engine (spring/damper)
-   - Story modes (calm/active/orbit/chaos)
-   - Export JSON, sliders, visual feedback
-*/
+<script>
+// ============================================================
+// 1. KONSTANTEN
+// ============================================================
+const PHI = 1.61803398875;
+const DEG_90 = Math.PI / 2;
+const DEG_120 = (2 * Math.PI) / 3;
+const DEG_180 = Math.PI;
 
-const layerOrder = ['SYN','QUANT','CONST','TMP','QSXI','ORBIT'];
-const N = layerOrder.length;
-const MODULE_MAP = {
-  SYN: './JS/SYN.js',
-  QUANT: './JS/CONST_QUANT.js',
-  CONST: './JS/CONST.js',
-  TMP: './JS/TMP.js',
-  QSXI: './JS/QSXI.js',
-  ORBIT: './JS/ORBIT.js'
+// ============================================================
+// 2. CANVAS SETUP
+// ============================================================
+const canvas = document.getElementById('continCanvas');
+const ctx = canvas.getContext('2d');
+let W, H, cx, cy, radius;
+
+function resizeCanvas() {
+    const wrap = document.getElementById('canvas-wrap');
+    const rect = wrap.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    W = canvas.width; H = canvas.height;
+    cx = W / 2; cy = H / 2;
+    radius = Math.min(W, H) * 0.38;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// ============================================================
+// 3. STATE — SYNCHRON
+// ============================================================
+const state = {
+    running: false,
+    paused: false,
+    autoMode: false,
+    cycle: 0,
+    t: 0,
+    // SYN und QUANT laufen SYNCHRON
+    synValue: 0.5,
+    quantValue: 0.5,
+    respoValue: 0.5,
+    syncValue: 1.0, // 1 = perfekt synchron
+    synAngle: 0,
+    quantAngle: 0,
+    // Schrauben
+    stiffness: 1.0,
+    damping: 0.4,
+    bias: 0.0,
+    priority: 0.5, // 0 = SYN bevorzugt, 1 = QUANT bevorzugt
+    // Orbits
+    orbits: { tokio: 0, corlu: 0, hh: 0 },
+    // SYN/QUANT-Punkte
+    synPoints: [],
+    quantPoints: []
 };
 
-const defaults = {
-  SYN: { orientation: 0 },
-  QUANT: { energy: 1 },
-  CONST: { stability: 1 },
-  TMP: { velocity: 0 },
-  QSXI: { points: [{x:0,y:0}] },
-  ORBIT: { mass: 1 }
-};
-
-let loaded = {};           // module objects or null
-let status = {};           // load status
-let W = [];                // matrix W[target][source]
-let CONST_SCREWS = { stiffness: 1.0, damping: 0.4, bias: 0.0 };
-let uhr = { t: 0, running: true, speed: 1.0 };
-let storyMode = 'calm';
-let TMP_state = { velocity: 0, phase: 0 };
-let TMP_target = { velocity: 0, phase: 0 };
-
-const layersList = document.getElementById('layersList');
-const outEl = document.getElementById('out');
-const fixPointEl = document.getElementById('fixPoint');
-const matrixContainer = document.getElementById('matrixContainer');
-const viz = document.getElementById('viz');
-const ctx = viz.getContext('2d');
-
-function log(...a){ console.log(...a); outEl.textContent += '\\n' + a.join(' '); outEl.scrollTop = outEl.scrollHeight; }
-function warn(...a){ console.warn(...a); outEl.textContent += '\\nWARN: ' + a.join(' '); }
-function setLayerStatus(name, ok, msg=''){ status[name] = { loaded: !!ok, msg: msg || (ok ? 'loaded' : 'missing') }; renderLayerList(); }
-function renderLayerList(){ layersList.innerHTML=''; for(const n of layerOrder){ const s = status[n]||{loaded:false,msg:'unknown'}; const div=document.createElement('div'); div.className='layer'; div.innerHTML = `<div><strong>${n}</strong><div style="font-size:12px;color:#8f8">${s.msg}</div></div><div class="status">${s.loaded?'OK':'FALLBACK'}</div>`; layersList.appendChild(div);} }
-
-/* Matrix init & UI */
-function initMatrix(){
-  for(let i=0;i<N;i++){ W[i]=[]; for(let j=0;j<N;j++) W[i][j] = (i===j)?0.9:0.08; }
+// ============================================================
+// 4. LOG
+// ============================================================
+function log(msg, type = 'info') {
+    const logDiv = document.getElementById('log');
+    const entry = document.createElement('div');
+    entry.className = 'entry';
+    const time = new Date().toLocaleTimeString();
+    const cls = type === 'ok' ? 'ok' : type === 'err' ? 'err' : type === 'warn' ? 'warn' :
+                type === 'syn' ? 'syn' : type === 'quant' ? 'quant' : type === 'respo' ? 'respo' : '';
+    entry.innerHTML = `<span class="time">[${time}]</span> <span class="msg ${cls}">${msg}</span>`;
+    logDiv.appendChild(entry);
+    logDiv.scrollTop = logDiv.scrollHeight;
+    while (logDiv.children.length > 100) logDiv.removeChild(logDiv.firstChild);
 }
-function renderMatrixUI(){
-  const table = document.createElement('table'); table.className='matrix-table';
-  const thead = document.createElement('thead'); const headRow = document.createElement('tr');
-  headRow.innerHTML = '<th></th>' + layerOrder.map(n=>`<th>${n}</th>`).join(''); thead.appendChild(headRow); table.appendChild(thead);
-  const tbody = document.createElement('tbody');
-  for(let i=0;i<N;i++){
-    const tr=document.createElement('tr'); tr.innerHTML = `<th>${layerOrder[i]}</th>`;
-    for(let j=0;j<N;j++){
-      const td=document.createElement('td');
-      const input=document.createElement('input'); input.type='range'; input.min=-1; input.max=2; input.step=0.02; input.value=W[i][j];
-      input.dataset.i=i; input.dataset.j=j;
-      const span=document.createElement('div'); span.style.fontSize='11px'; span.style.marginTop='4px'; span.textContent=W[i][j];
-      input.addEventListener('input',(e)=>{ const ii=+e.target.dataset.i, jj=+e.target.dataset.j; W[ii][jj]=+e.target.value; span.textContent=Number(W[ii][jj].toFixed(2)); scheduleRecompute(); });
-      td.appendChild(input); td.appendChild(span); tr.appendChild(td);
+
+// ============================================================
+// 5. SYN · QUANT · RESPO — SYNCHRON
+// ============================================================
+
+// SYN: 90°-Relation (orthogonal)
+function computeSyn(angle, strength) {
+    strength = strength || 1;
+    const angles = [angle, angle + DEG_90, angle + DEG_180, angle + DEG_90 * 3];
+    return angles.map(a => ({
+        angle: a,
+        x: Math.cos(a) * radius * 0.8 * strength,
+        y: Math.sin(a) * radius * 0.8 * strength,
+        weight: Math.sin(a + state.t) * 0.5 + 0.5
+    }));
+}
+
+// QUANT: 120°-Relation (triharmonisch)
+function computeQuant(angle, strength) {
+    strength = strength || 1;
+    const angles = [angle, angle + DEG_120, angle + DEG_120 * 2];
+    return angles.map(a => ({
+        angle: a,
+        x: Math.cos(a) * radius * 0.7 * strength,
+        y: Math.sin(a) * radius * 0.7 * strength,
+        weight: Math.cos(a + state.t * 0.7) * 0.5 + 0.5
+    }));
+}
+
+// RESPO: φ-Mischung mit Priorität
+function computeRespo(synVal, quantVal, priority) {
+    // priority: 0 = SYN, 1 = QUANT
+    const synWeight = 1 - priority;
+    const quantWeight = priority;
+    const weighted = (synVal * synWeight + quantVal * quantWeight);
+    return Math.min(1, Math.max(0, weighted / PHI * 1.618));
+}
+
+// SYNCHRON-Maß: wie gut SYN und QUANT im Einklang sind
+function computeSync(synVal, quantVal) {
+    const diff = Math.abs(synVal - quantVal);
+    return Math.max(0, 1 - diff * 1.2);
+}
+
+// ============================================================
+// 6. RENDER — SYNCHRON
+// ============================================================
+function render() {
+    if (state.paused) {
+        requestAnimationFrame(render);
+        return;
     }
-    tbody.appendChild(tr);
-  }
-  table.appendChild(tbody); matrixContainer.innerHTML=''; matrixContainer.appendChild(table);
-}
 
-/* CONST screws UI */
-function renderScrewsUI(){
-  const c = document.getElementById('screwsUI'); c.innerHTML='';
-  const div = document.createElement('div'); div.innerHTML = `
-    <div style="font-weight:700;margin-top:8px">CONST‑Schrauben (Naturgesetze)</div>
-    <label>stiffness <input id="screw-stiff" type="range" min="0.1" max="4" step="0.05" value="${CONST_SCREWS.stiffness}"></label>
-    <span id="screw-stiff-val">${CONST_SCREWS.stiffness}</span><br>
-    <label>damping <input id="screw-damp" type="range" min="0" max="2" step="0.01" value="${CONST_SCREWS.damping}"></label>
-    <span id="screw-damp-val">${CONST_SCREWS.damping}</span><br>
-    <label>bias <input id="screw-bias" type="range" min="-1" max="1" step="0.01" value="${CONST_SCREWS.bias}"></label>
-    <span id="screw-bias-val">${CONST_SCREWS.bias}</span>
-  `;
-  c.appendChild(div);
-  document.getElementById('screw-stiff').addEventListener('input', e=>{ CONST_SCREWS.stiffness = Number(e.target.value); document.getElementById('screw-stiff-val').textContent = CONST_SCREWS.stiffness; scheduleRecompute(); });
-  document.getElementById('screw-damp').addEventListener('input', e=>{ CONST_SCREWS.damping = Number(e.target.value); document.getElementById('screw-damp-val').textContent = CONST_SCREWS.damping; scheduleRecompute(); });
-  document.getElementById('screw-bias').addEventListener('input', e=>{ CONST_SCREWS.bias = Number(e.target.value); document.getElementById('screw-bias-val').textContent = CONST_SCREWS.bias; scheduleRecompute(); });
-}
+    ctx.clearRect(0, 0, W, H);
 
-/* Try to load real modules (tolerant) */
-async function tryLoadModules(){
-  for(const [key,path] of Object.entries(MODULE_MAP)){
-    try{ const mod = await import(path); loaded[key]=mod; setLayerStatus(key,true,'loaded'); log('geladen:',key); } catch(e){ loaded[key]=null; setLayerStatus(key,false,`missing: ${path}`); warn('Modul nicht geladen:',key); }
-  }
-}
+    // Hintergrund-Gitter (3-9-27)
+    drawGrid();
 
-/* Layer scalar extraction (0..1) */
-function layerScore(name){
-  try{
-    const mod = loaded[name];
-    if(!mod){ // sensible defaults
-      return { SYN:0.2, QUANT:0.6, CONST:0.7, TMP:0.1, QSXI:0.1, ORBIT:0.5 }[name] ?? 0.2;
+    // Orbits (2268, 756, 243)
+    drawOrbits();
+
+    // SYN-Netz (90°)
+    drawSynNetwork();
+
+    // QUANT-Netz (120°)
+    drawQuantNetwork();
+
+    // RESPO-Kern
+    drawRespoCore();
+
+    // SYNCHRON-Linie (verbindet SYN und QUANT)
+    drawSyncLine();
+
+    // Metriken aktualisieren
+    document.getElementById('syn-value').textContent = state.synValue.toFixed(3);
+    document.getElementById('quant-value').textContent = state.quantValue.toFixed(3);
+    document.getElementById('respo-value').textContent = state.respoValue.toFixed(3);
+    document.getElementById('sync-value').textContent = state.syncValue.toFixed(3);
+
+    // Zeit & Orbits
+    state.t += 0.008;
+    if (state.running) {
+        state.synAngle += 0.005 * (1 - state.priority * 0.3);
+        state.quantAngle += 0.005 * (1 + state.priority * 0.3);
+        state.orbits.tokio += 0.002;
+        state.orbits.corlu += 0.003;
+        state.orbits.hh += 0.005;
     }
-    if(name==='QUANT'){ const v = mod.QUANT?.energy ?? mod.default?.energy ?? mod.energy ?? 1; return normalizeScalar(Number(v),0,10); }
-    if(name==='CONST'){ const v = mod.CONST?.stability ?? mod.default?.stability ?? mod.stability ?? 1; return normalizeScalar(Number(v),0,10); }
-    if(name==='TMP'){ const v = mod.TMP?.velocity ?? mod.velocity ?? TMP_state.velocity ?? 0; return normalizeScalar(Math.abs(Number(v)),0,50); }
-    if(name==='SYN'){ const v = mod.SYN?.orientation ?? mod.orientation ?? 0; return normalizeScalar(Math.abs(Number(v)),0,Math.PI*2); }
-    if(name==='QSXI'){ const pts = mod.QSXI?.points ?? mod.points ?? defaults.QSXI.points; const r = Math.hypot(pts[0]?.x||0, pts[0]?.y||0); return normalizeScalar(r,0,200); }
-    if(name==='ORBIT'){ const v = mod.ORBIT?.mass ?? mod.mass ?? 1; return normalizeScalar(Number(v),0,100); }
-    return 0.2;
-  }catch(e){ warn('layerScore error', name, e); return 0.1; }
-}
-function normalizeScalar(v,min,max){ if(!isFinite(v)) return 0; const t=(v-min)/(max-min); return Math.max(0,Math.min(1,t)); }
 
-/* Nonlinear transforms (depth for QUANT and SYN) */
-function nonlinearTransform(v,name){
-  if(name==='QUANT') return Math.pow(Math.max(0,v),0.85);
-  if(name==='SYN') return Math.sin(v);
-  return v;
+    requestAnimationFrame(render);
 }
+render();
 
-/* Compute influenced scores using W */
-function computeInfluencedScores(){
-  const base = layerOrder.map(n => nonlinearTransform(layerScore(n), n));
-  const influenced = new Array(N).fill(0);
-  for(let i=0;i<N;i++) for(let j=0;j<N;j++) influenced[i] += (W[i][j]||0) * (base[j]||0);
-  return { base, influenced };
-}
-
-/* UHRWERK & TMP engine */
-function uhrwerkTick(dt){
-  uhr.t += dt * uhr.speed;
-  // story-driven TMP target
-  if(storyMode==='calm'){ TMP_target.velocity = 0.2 + 0.1*Math.sin(uhr.t*0.8); TMP_target.phase = uhr.t*0.2; }
-  else if(storyMode==='active'){ TMP_target.velocity = 0.6 + 0.4*Math.sin(uhr.t*2.2) + 0.1*Math.sin(uhr.t*7); TMP_target.phase = uhr.t*0.6; }
-  else if(storyMode==='orbit'){ TMP_target.velocity = 0.45 + 0.3*Math.sin(uhr.t*1.2); TMP_target.phase = uhr.t*0.5; }
-  else if(storyMode==='chaos'){ TMP_target.velocity = (Math.random()*1.2); TMP_target.phase = Math.random()*Math.PI*2; }
-}
-function applyTmpDynamics(dt){
-  const targetV = TMP_target.velocity || 0;
-  const curV = TMP_state.velocity || 0;
-  const acc = (CONST_SCREWS.stiffness * (targetV - curV)) - (CONST_SCREWS.damping * curV) + CONST_SCREWS.bias;
-  TMP_state.velocity = curV + acc * dt;
-  TMP_state.phase = (TMP_state.phase || 0) + (TMP_state.velocity * dt);
+// ============================================================
+// 7. ZEICHEN-FUNKTIONEN
+// ============================================================
+function drawGrid() {
+    const sizes = [3, 9, 27];
+    const colors = ['#0ff3', '#f0f3', '#ff03'];
+    sizes.forEach((size, idx) => {
+        const spacing = radius * 0.06 * (27 / size);
+        const offset = (size - 1) * spacing / 2;
+        ctx.strokeStyle = colors[idx];
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < size; i++) {
+            const pos = -offset + i * spacing;
+            ctx.beginPath();
+            ctx.moveTo(cx + pos, cy - offset);
+            ctx.lineTo(cx + pos, cy + offset);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx - offset, cy + pos);
+            ctx.lineTo(cx + offset, cy + pos);
+            ctx.stroke();
+        }
+    });
 }
 
-/* Compute Fix‑Point combining centroid + TMP/SYN influence + QUANT/ORBIT/CONST */
-function computeFixPoint(){
-  const { base, influenced } = computeInfluencedScores();
-  // centroid from QSXI
-  let centroid = {x:0,y:0};
-  try{
-    const mod = loaded.QSXI;
-    const pts = mod?.QSXI?.points ?? mod?.points ?? defaults.QSXI.points;
-    centroid = pts.length ? pts.reduce((a,p)=>({x:a.x+p.x,y:a.y+p.y}),{x:0,y:0}) : {x:0,y:0};
-    centroid.x /= Math.max(1, (pts?.length||1)); centroid.y /= Math.max(1,(pts?.length||1));
-  }catch(e){ centroid={x:0,y:0}; }
-
-  // use influenced SYN & TMP for x/y
-  const syn = (influenced[0] ?? 0);
-  const tmp = (influenced[3] ?? (normalizeScalar(Math.abs(TMP_state.velocity||0),0,50)));
-  const angle = (syn % 1) * Math.PI*2 + (TMP_state.phase || 0);
-  const vx = Math.cos(angle) * tmp * 30;
-  const vy = Math.sin(angle) * tmp * 30;
-  const x = centroid.x + vx;
-  const y = centroid.y + vy;
-
-  // z from QUANT/ORBIT scaled by CONST stability (example formula, tweakable)
-  const quant = Math.max(0.0001, (influenced[1] ?? base[1] ?? 1));
-  const orbit = Math.max(0.0001, (influenced[5] ?? base[5] ?? 1));
-  const cons = Math.max(0.0001, Math.abs(influenced[2] ?? base[2] ?? 1));
-  const z = (quant * orbit) / (cons * CONST_SCREWS.stiffness);
-
-  const point = { x: Number(x.toFixed(4)), y: Number(y.toFixed(4)), z: Number(z.toFixed(4)) };
-  const meta = { base, influenced, centroid, tmpState: {...TMP_state}, screws:{...CONST_SCREWS}, story:storyMode, timestamp:Date.now() };
-  return { point, meta };
-}
-
-/* Visualization */
-function resizeCanvas(){
-  const dpr = window.devicePixelRatio || 1;
-  viz.width = Math.floor(viz.clientWidth * dpr);
-  viz.height = Math.floor(viz.clientHeight * dpr);
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-window.addEventListener('resize', resizeCanvas); resizeCanvas();
-
-function drawGraph(fix){
-  resizeCanvas();
-  ctx.clearRect(0,0,viz.clientWidth,viz.clientHeight);
-  const cx = viz.clientWidth/2, cy = viz.clientHeight/2;
-  const R = Math.min(cx,cy) - 100;
-  const angleStep = (Math.PI*2)/N;
-  const pts = [];
-  for(let i=0;i<N;i++){ const a = -Math.PI/2 + i*angleStep; pts.push({ x: cx + Math.cos(a)*R, y: cy + Math.sin(a)*R, name:layerOrder[i] }); }
-
-  // edges
-  for(let i=0;i<N;i++) for(let j=0;j<N;j++){
-    const w = W[i][j]||0; if(Math.abs(w)<0.02) continue;
+function drawOrbits() {
+    const t = state.orbits.tokio;
+    const r1 = Math.min(W, H) * 0.32;
+    ctx.strokeStyle = `rgba(255, 107, 107, ${0.1 + state.synValue * 0.2})`;
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 8]);
     ctx.beginPath();
-    ctx.strokeStyle = w>0 ? `rgba(108,204,255,${Math.min(1,Math.abs(w))})` : `rgba(255,100,100,${Math.min(1,Math.abs(w))})`;
-    ctx.lineWidth = Math.max(1, Math.abs(w)*6);
-    ctx.moveTo(pts[i].x, pts[i].y);
-    const mx = (pts[i].x + pts[j].x)/2 + (pts[i].y - pts[j].y)*0.08;
-    const my = (pts[i].y + pts[j].y)/2 + (pts[j].x - pts[i].x)*0.08;
-    ctx.quadraticCurveTo(mx,my, pts[j].x, pts[j].y); ctx.stroke();
-  }
+    ctx.arc(cx + Math.cos(t) * r1 * 0.1, cy + Math.sin(t) * r1 * 0.1, r1 * 0.9, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = `rgba(255, 107, 107, ${0.3 + state.synValue * 0.3})`;
+    ctx.font = '7px Consolas';
+    ctx.textAlign = 'center';
+    ctx.fillText('2268', cx + Math.cos(t) * r1 * 0.85, cy + Math.sin(t) * r1 * 0.85);
 
-  // nodes
-  for(let i=0;i<N;i++){
-    const p = pts[i]; const infl = Math.max(0, Math.min(1, (fix.meta.influenced[i] || 0)));
-    const radius = 12 + infl*18;
-    ctx.fillStyle = '#111'; ctx.strokeStyle = '#6cf'; ctx.beginPath(); ctx.arc(p.x,p.y,radius,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#0f0'; ctx.font = '12px Consolas'; ctx.fillText(layerOrder[i], p.x - radius + 4, p.y + 4);
-  }
+    const r2 = Math.min(W, H) * 0.22;
+    ctx.strokeStyle = `rgba(107, 255, 107, ${0.1 + state.quantValue * 0.2})`;
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 8]);
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(t * 1.3) * r2 * 0.1, cy + Math.sin(t * 1.3) * r2 * 0.1, r2, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = `rgba(107, 255, 107, ${0.3 + state.quantValue * 0.3})`;
+    ctx.fillText('756', cx + Math.cos(t * 1.3) * r2 * 0.95, cy + Math.sin(t * 1.3) * r2 * 0.95);
 
-  // fix point indicator
-  const fx = cx + fix.point.x / 30; const fy = cy + fix.point.y / 30;
-  ctx.fillStyle = '#ffd54d'; ctx.beginPath(); ctx.arc(fx, fy, Math.max(6, Math.min(30, Math.abs(fix.point.z)/50)), 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#9f9'; ctx.font='12px Consolas'; ctx.fillText(`fix: x:${fix.point.x} y:${fix.point.y} z:${fix.point.z}`, 10, 18);
+    const r3 = Math.min(W, H) * 0.12;
+    ctx.strokeStyle = `rgba(107, 107, 255, ${0.1 + state.respoValue * 0.2})`;
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 8]);
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(t * 1.7) * r3 * 0.1, cy + Math.sin(t * 1.7) * r3 * 0.1, r3, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = `rgba(107, 107, 255, ${0.3 + state.respoValue * 0.3})`;
+    ctx.fillText('243', cx + Math.cos(t * 1.7) * r3 * 0.9, cy + Math.sin(t * 1.7) * r3 * 0.9);
 }
 
-/* Actions & UI bindings */
-let loopRAF = null, lastRAF = performance.now();
-function rafLoop(now){
-  const dt = (now - lastRAF)/1000; lastRAF = now;
-  if(uhr.running){ uhrwerkTick(dt); applyTmpDynamics(dt); }
-  scheduleRecompute(); requestAnimationFrame(rafLoop);
+function drawSynNetwork() {
+    const strength = state.synValue;
+    const points = computeSyn(state.synAngle, strength);
+    state.synPoints = points;
+
+    ctx.strokeStyle = `rgba(255, 107, 107, ${0.3 + strength * 0.4})`;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < points.length; i++) {
+        const p1 = points[i];
+        const p2 = points[(i + 1) % points.length];
+        ctx.beginPath();
+        ctx.moveTo(cx + p1.x, cy + p1.y);
+        ctx.lineTo(cx + p2.x, cy + p2.y);
+        ctx.stroke();
+        const midX = (p1.x + p2.x) / 2;
+        const midY = (p1.y + p2.y) / 2;
+        ctx.fillStyle = `rgba(255, 107, 107, ${0.2 + strength * 0.3})`;
+        ctx.font = '7px Consolas';
+        ctx.textAlign = 'center';
+        ctx.fillText('90°', cx + midX, cy + midY - 10);
+    }
+    points.forEach(p => {
+        const glow = ctx.createRadialGradient(cx + p.x, cy + p.y, 0, cx + p.x, cy + p.y, 14);
+        glow.addColorStop(0, `rgba(255, 107, 107, ${0.8 + p.weight * 0.2})`);
+        glow.addColorStop(1, 'rgba(255, 107, 107, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(cx + p.x, cy + p.y, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(cx + p.x, cy + p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+    });
 }
 
-function startEngine(){ if(!loopRAF){ lastRAF = performance.now(); loopRAF = requestAnimationFrame(rafLoop); log('Engine started'); } }
-function stopEngine(){ if(loopRAF){ cancelAnimationFrame(loopRAF); loopRAF = null; log('Engine stopped'); } }
+function drawQuantNetwork() {
+    const strength = state.quantValue;
+    const points = computeQuant(state.quantAngle, strength);
+    state.quantPoints = points;
 
-function recomputeAndDraw(){
-  const fix = computeFixPoint(); fixPointEl.textContent = JSON.stringify(fix.point,null,2); drawGraph(fix); log('recomputed @ ' + new Date().toISOString()); }
-function randomizeMatrix(){ for(let i=0;i<N;i++) for(let j=0;j<N;j++) W[i][j] = Number((Math.random()*2-0.2).toFixed(2)); renderMatrixUI(); recomputeAndDraw(); }
-function normalizeRows(){ for(let i=0;i<N;i++){ const row=W[i]; const s=row.reduce((a,b)=>a+Math.abs(b),0)||1; for(let j=0;j<N;j++) row[j]=Number((row[j]/s).toFixed(4)); } renderMatrixUI(); recomputeAndDraw(); }
-function exportJSON(){ const fix=computeFixPoint(); const data={repo:'iki1uc/CONTINIUM',fix,matrix:W, screws:CONST_SCREWS, story:storyMode, date:new Date().toISOString()}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='continuum-reality.json'; a.click(); URL.revokeObjectURL(url); log('Exported JSON'); }
-
-/* Recompute throttling for slider drags */
-let recomputeTimeout=null;
-function scheduleRecompute(){ if(recomputeTimeout) clearTimeout(recomputeTimeout); recomputeTimeout = setTimeout(()=>{ recomputeAndDraw(); recomputeTimeout=null; }, 150); }
-
-/* Event wiring */
-document.getElementById('btnStart').addEventListener('click', ()=>{ uhr.running = true; startEngine(); });
-document.getElementById('btnStop').addEventListener('click', ()=>{ uhr.running = false; stopEngine(); });
-document.getElementById('btnRecompute').addEventListener('click', recomputeAndDraw);
-document.getElementById('btnRandom').addEventListener('click', randomizeMatrix);
-document.getElementById('btnNormalize').addEventListener('click', normalizeRows);
-document.getElementById('btnExport').addEventListener('click', exportJSON);
-document.getElementById('story').addEventListener('change', e=>{ storyMode = e.target.value; log('Story set to', storyMode); });
-
-/* Initialization */
-function init(){
-  initMatrix(); renderMatrixUI(); renderScrewsUI(); renderLayerList();
-  tryLoadModules().then(()=>{ recomputeAndDraw(); log('Init complete — modules tried and defaults used where missing.'); });
-  // auto-start small RAF so TMP runs
-  startEngine();
-  // attach key shortcuts for quick testing
-  window.addEventListener('keydown', (e)=>{ if(e.key==='r') randomizeMatrix(); if(e.key==='s') startEngine(); if(e.key==='x') stopEngine(); if(e.key==='e') exportJSON(); });
+    ctx.strokeStyle = `rgba(107, 107, 255, ${0.3 + strength * 0.4})`;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < points.length; i++) {
+        const p1 = points[i];
+        const p2 = points[(i + 1) % points.length];
+        ctx.beginPath();
+        ctx.moveTo(cx + p1.x, cy + p1.y);
+        ctx.lineTo(cx + p2.x, cy + p2.y);
+        ctx.stroke();
+        const midX = (p1.x + p2.x) / 2;
+        const midY = (p1.y + p2.y) / 2;
+        ctx.fillStyle = `rgba(107, 107, 255, ${0.2 + strength * 0.3})`;
+        ctx.font = '7px Consolas';
+        ctx.textAlign = 'center';
+        ctx.fillText('120°', cx + midX, cy + midY + 14);
+    }
+    points.forEach(p => {
+        const glow = ctx.createRadialGradient(cx + p.x, cy + p.y, 0, cx + p.x, cy + p.y, 16);
+        glow.addColorStop(0, `rgba(107, 107, 255, ${0.6 + p.weight * 0.3})`);
+        glow.addColorStop(1, 'rgba(107, 107, 255, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(cx + p.x, cy + p.y, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(cx + p.x, cy + p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+    });
 }
-init();
 
-/* Utility for module authoring: allow injecting TMP_state externally (module can update) */
-window.CONTINIUM = window.CONTINIUM || {};
-window.CONTINIUM.setTMPState = (s)=>{ TMP_state = {...TMP_state, ...s}; };
-window.CONTINIUM.setModule = (name,obj)=>{ loaded[name]=obj; setLayerStatus(name, !!obj, obj? 'injected' : 'removed'); scheduleRecompute(); };
+function drawRespoCore() {
+    const val = state.respoValue;
+    const coreRadius = 10 + val * 35;
 
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreRadius + 30);
+    glow.addColorStop(0, `rgba(255, 217, 61, ${0.3 + val * 0.5})`);
+    glow.addColorStop(0.5, `rgba(255, 217, 61, ${0.1 + val * 0.2})`);
+    glow.addColorStop(1, 'rgba(255, 217, 61, 0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, coreRadius + 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    const coreGrad = ctx.createRadialGradient(cx - 3, cy - 3, 0, cx, cy, coreRadius);
+    coreGrad.addColorStop(0, `rgba(255, 217, 61, ${0.9 + val * 0.1})`);
+    coreGrad.addColorStop(0.7, `rgba(255, 200, 50, ${0.6 + val * 0.3})`);
+    coreGrad.addColorStop(1, `rgba(255, 180, 30, ${0.3 + val * 0.2})`);
+    ctx.fillStyle = coreGrad;
+    ctx.shadowColor = '#ffd700';
+    ctx.shadowBlur = 25 + val * 30;
+    ctx.beginPath();
+    ctx.arc(cx, cy, coreRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#000';
+    ctx.font = `bold ${10 + val * 10}px Consolas`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('◈', cx, cy - 1);
+
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + val * 0.5})`;
+    ctx.font = '8px Consolas';
+    ctx.fillText(`φ = ${state.respoValue.toFixed(3)}`, cx, cy + coreRadius + 16);
+}
+
+function drawSyncLine() {
+    // Verbindet SYN- und QUANT-Punkte
+    const synP = state.synPoints;
+    const quantP = state.quantPoints;
+    if (synP.length > 0 && quantP.length > 0) {
+        const s = synP[0];
+        const q = quantP[0];
+        ctx.strokeStyle = `rgba(255, 215, 0, ${0.1 + state.syncValue * 0.4})`;
+        ctx.lineWidth = 1 + state.syncValue * 2;
+        ctx.setLineDash([3, 5]);
+        ctx.beginPath();
+        ctx.moveTo(cx + s.x, cy + s.y);
+        ctx.lineTo(cx + q.x, cy + q.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Sync-Wert anzeigen
+        ctx.fillStyle = `rgba(255, 215, 0, ${0.3 + state.syncValue * 0.5})`;
+        ctx.font = '7px Consolas';
+        ctx.textAlign = 'center';
+        const midX = (s.x + q.x) / 2;
+        const midY = (s.y + q.y) / 2;
+        ctx.fillText(`SYNC ${(state.syncValue * 100).toFixed(0)}%`, cx + midX, cy + midY - 16);
+    }
+}
+
+// ============================================================
+// 8. UPDATE-FUNKTIONEN
+// ============================================================
+function updateContinuum() {
+    // RESPO mit Priorität berechnen
+    state.respoValue = computeRespo(state.synValue, state.quantValue, state.priority);
+
+    // SYNCHRON-Maß
+    state.syncValue = computeSync(state.synValue, state.quantValue);
+
+    // Dynamik mit Schrauben
+    const targetSyn = state.synValue;
+    const targetQuant = state.quantValue;
+
+    // Feder-Dämpfer-System
+    const synAcc = (targetSyn - state.synValue) * state.stiffness - state.damping * state.synValue + state.bias;
+    const quantAcc = (targetQuant - state.quantValue) * state.stiffness - state.damping * state.quantValue - state.bias;
+
+    state.synValue += synAcc * 0.01;
+    state.quantValue += quantAcc * 0.01;
+
+    // Begrenzen
+    state.synValue = Math.min(1, Math.max(0.05, state.synValue));
+    state.quantValue = Math.min(1, Math.max(0.05, state.quantValue));
+}
+
+// ============================================================
+// 9. CONTROLS
+// ============================================================
+document.getElementById('btn-start').addEventListener('click', function() {
+    state.running = !state.running;
+    this.textContent = state.running ? '⏸ STOP' : '▶ START';
+    document.getElementById('state-display').textContent = state.running ? '● läuft' : '● gestoppt';
+    document.getElementById('state-display').style.color = state.running ? 'var(--gold)' : '#666';
+    log(state.running ? '▶ CONTINIUM gestartet' : '⏸ CONTINIUM gestoppt', state.running ? 'ok' : 'warn');
+});
+
+document.getElementById('btn-syn').addEventListener('click', function() {
+    state.synValue = Math.min(1, state.synValue + 0.1);
+    updateContinuum();
+    log(`⟳ SYN auf ${state.synValue.toFixed(2)} verstärkt`, 'syn');
+});
+
+document.getElementById('btn-quant').addEventListener('click', function() {
+    state.quantValue = Math.min(1, state.quantValue + 0.1);
+    updateContinuum();
+    log(`⚛ QUANT auf ${state.quantValue.toFixed(2)} verstärkt`, 'quant');
+});
+
+document.getElementById('btn-respo').addEventListener('click', function() {
+    state.respoValue = computeRespo(state.synValue, state.quantValue, state.priority);
+    log(`◈ RESPO = ${state.respoValue.toFixed(3)}`, 'respo');
+});
+
+document.getElementById('btn-reset').addEventListener('click', function() {
+    state.running = false;
+    state.paused = false;
+    state.cycle = 0;
+    state.t = 0;
+    state.synValue = 0.5;
+    state.quantValue = 0.5;
+    state.respoValue = 0.5;
+    state.syncValue = 1.0;
+    state.synAngle = 0;
+    state.quantAngle = 0;
+    state.orbits = { tokio: 0, corlu: 0, hh: 0 };
+    document.getElementById('btn-start').textContent = '▶ START';
+    document.getElementById('state-display').textContent = '● reset';
+    document.getElementById('state-display').style.color = '#f44';
+    document.getElementById('cycle-display').textContent = 'Zyklus 0';
+    document.getElementById('syn-value').textContent = '0.500';
+    document.getElementById('quant-value').textContent = '0.500';
+    document.getElementById('respo-value').textContent = '0.500';
+    document.getElementById('sync-value').textContent = '1.000';
+    log('⟲ RESET — CONTINIUM zurückgesetzt', 'warn');
+});
+
+document.getElementById('btn-auto').addEventListener('click', function() {
+    state.autoMode = !state.autoMode;
+    this.textContent = state.autoMode ? '⏸ PAUSE' : '▶ AUTO';
+    if (state.autoMode) {
+        log('▶ AUTO-Modus — CONTINIUM atmet', 'warn');
+        state.running = true;
+        document.getElementById('btn-start').textContent = '⏸ STOP';
+        document.getElementById('state-display').textContent = '● auto';
+        document.getElementById('state-display').style.color = 'var(--gold)';
+        if (window.autoInterval) clearInterval(window.autoInterval);
+        window.autoInterval = setInterval(function() {
+            state.cycle++;
+            document.getElementById('cycle-display').textContent = 'Zyklus ' + state.cycle;
+            state.synValue = 0.3 + 0.6 * (0.5 + 0.5 * Math.sin(state.cycle * 0.3));
+            state.quantValue = 0.3 + 0.6 * (0.5 + 0.5 * Math.cos(state.cycle * 0.25));
+            state.priority = 0.5 + 0.5 * Math.sin(state.cycle * 0.2);
+            document.getElementById('priority-slider').value = state.priority;
+            document.getElementById('priority-val').textContent = state.priority.toFixed(2);
+            updateContinuum();
+            log(`🔄 Zyklus ${state.cycle}: SYN=${state.synValue.toFixed(2)} QUANT=${state.quantValue.toFixed(2)} RESPO=${state.respoValue.toFixed(2)} SYNC=${state.syncValue.toFixed(2)}`, 'warn');
+        }, 2500);
+    } else {
+        clearInterval(window.autoInterval);
+        log('⏸ AUTO-Modus pausiert', 'warn');
+        document.getElementById('state-display').textContent = '● pausiert';
+        document.getElementById('state-display').style.color = '#ff4';
+    }
+});
+
+// ============================================================
+// 10. SCHRAUBEN & PRIORITÄT
+// ============================================================
+document.getElementById('screw-stiff').addEventListener('input', function() {
+    state.stiffness = parseFloat(this.value);
+    document.getElementById('screw-stiff-val').textContent = state.stiffness.toFixed(2);
+    log(`⚙ Stiffness = ${state.stiffness.toFixed(2)}`, 'ok');
+});
+
+document.getElementById('screw-damp').addEventListener('input', function() {
+    state.damping = parseFloat(this.value);
+    document.getElementById('screw-damp-val').textContent = state.damping.toFixed(2);
+    log(`⚙ Damping = ${state.damping.toFixed(2)}`, 'ok');
+});
+
+document.getElementById('screw-bias').addEventListener('input', function() {
+    state.bias = parseFloat(this.value);
+    document.getElementById('screw-bias-val').textContent = state.bias.toFixed(2);
+    log(`⚙ Bias = ${state.bias.toFixed(2)}`, 'ok');
+});
+
+document.getElementById('priority-slider').addEventListener('input', function() {
+    state.priority = parseFloat(this.value);
+    document.getElementById('priority-val').textContent = state.priority.toFixed(2);
+    updateContinuum();
+    log(`🎯 Priorität = ${state.priority.toFixed(2)} (${state.priority < 0.5 ? 'SYN' : 'QUANT'})`, 'ok');
+});
+
+// ============================================================
+// 11. TASTATUR
+// ============================================================
+document.addEventListener('keydown', function(e) {
+    if (e.key === ' ') { e.preventDefault(); document.getElementById('btn-start').click(); }
+    if (e.key === 's' || e.key === 'S') document.getElementById('btn-syn').click();
+    if (e.key === 'q' || e.key === 'Q') document.getElementById('btn-quant').click();
+    if (e.key === 'r' || e.key === 'R') document.getElementById('btn-respo').click();
+    if (e.key === 'x' || e.key === 'X') document.getElementById('btn-reset').click();
+    if (e.key === 'a' || e.key === 'A') document.getElementById('btn-auto').click();
+});
+
+// ============================================================
+// 12. UHR
+// ============================================================
+function updateClock() {
+    document.getElementById('clock').textContent = '⏱️ ' + new Date().toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+// 13. INIT — SYNCHRON STARTEN
+// ============================================================
+log('◈ CONTINIUM · SYNCHRON — Priorisierbar · Schrauben', 'respo');
+log('⟳ 90°-Relation: SYN = Orthogonalität', 'syn');
+log('⚛ 120°-Relation: QUANT = Triharmonie', 'quant');
+log('◈ RESPO = (SYN + QUANT) / φ mit Priorität', 'respo');
+log('⚙ Stiffness · Damping · Bias — Schrauben drehen', 'ok');
+log('🎯 Priorität: 0 = SYN · 1 = QUANT', 'ok');
+log('⌨️  space=Start  s=SYN  q=QUANT  r=RESPO  x=Reset  a=Auto', 'ok');
+
+console.log('◈ CONTINIUM · SYNCHRON — Priorisierbar · Schrauben');
+console.log('⟳ 90°-Relation: SYN');
+console.log('⚛ 120°-Relation: QUANT');
+console.log('◈ RESPO = (SYN + QUANT) / φ mit Priorität');
+console.log('⚙ Schrauben: Stiffness, Damping, Bias');
+console.log('⌨️  space=Start  s=SYN  q=QUANT  r=RESPO  x=Reset  a=Auto');
+
+// Initiale Werte setzen
+updateContinuum();
+
+// Automatisch starten
+setTimeout(function() {
+    state.running = true;
+    document.getElementById('btn-start').textContent = '⏸ STOP';
+    document.getElementById('state-display').textContent = '● läuft';
+    document.getElementById('state-display').style.color = 'var(--gold)';
+    log('▶ CONTINIUM automatisch gestartet', 'ok');
+}, 500);
 </script>
 </body>
 </html>
