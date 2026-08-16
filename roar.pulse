@@ -1,1 +1,7 @@
+roar.pulse = (
+    SYNCHRON > 0.85 &&
+    Garantie >= 0.67 &&
+    circ.raw.value <= circ.raw.maxTrust &&
+    NC.SYSTEM.SELF_PROTECT == true
+)
 
